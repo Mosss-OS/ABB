@@ -28,7 +28,7 @@ export async function translateTask(description: string): Promise<{ output: stri
     const sourceText = extractSourceText(description);
 
     const response = await openai.chat.completions.create({
-      model: 'grok-2',
+      model: 'llama-3.1-70b-versatile',
       messages: [
         { role: 'system', content: `Translate the following text to ${targetLang}. Provide only the translation.` },
         { role: 'user', content: sourceText },

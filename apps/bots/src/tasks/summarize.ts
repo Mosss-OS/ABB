@@ -12,7 +12,7 @@ export async function summarizeTask(description: string): Promise<{ output: stri
       .trim();
 
     const response = await openai.chat.completions.create({
-      model: 'grok-2',
+      model: 'llama-3.1-70b-versatile',
       messages: [
         { role: 'system', content: 'Summarize the following text in 2 sentences or less.' },
         { role: 'user', content: sourceText },
