@@ -4,7 +4,10 @@
   "scripts": {
     "dev": "tsx watch src/core/webhook-server.ts",
     "start": "node dist/core/webhook-server.js",
-    "build": "tsc"
+    "build": "tsc",
+    "create-signers": "tsx src/scripts/create-signers.ts",
+    "setup-wallets": "tsx src/scripts/setup-wallets.ts",
+    "test": "tsx src/scripts/integration-test.ts"
   },
   "dependencies": {
     "@neynar/nodejs-sdk": "^2.0.0",
