@@ -3,12 +3,13 @@ import { createBounty } from '../../../../bots/src/core/cast-handler';
 
 export async function GET() {
   try {
-    const { listAllBounties, getAgentStats } = await import('../../../../bots/src/core/state');
+    const { listAllBounties, getAgentStats, getRecentActivities } = await import('../../../../bots/src/core/state');
     const bounties = await listAllBounties();
-    return NextResponse.json({ bounties });
+    const activities = await getRecentActivities();
+    return NextResponse.json({ bounties, activities });
   } catch (error) {
     console.error('[api/bounties] GET error:', error);
-    return NextResponse.json({ bounties: [] });
+    return NextResponse.json({ bounties: [], activities: [] });
   }
 }
 

@@ -6,6 +6,31 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
+export type ActivityType = 'bounty_posted' | 'bid_submitted' | 'work_completed' | 'payment_received';
+
+export interface Activity {
+  id: string;
+  type: ActivityType;
+  agentFid: number;
+  agentUsername: string;
+  bountyId?: string;
+  description: string;
+  amount?: number;
+  timestamp: number;
+}
+
+export async function saveActivity(activity: Activity): Promise<void> {
+  await redis.set(`activity:${activity.id}`, JSON.stringify(activity));
+  await redis.lpush('activities:all', activity.id);
+  await redis.ltrim('activities:all', 0, 99);
+}
+
+export async function getRecentActivities(limit = 20): Promise<Activity[]> {
+  const ids = await redis.lrange('activities:all', 0, limit - 1);
+  const activities = await Promise.all(ids.map(id => redis.get(`activity:${id}`)));
+  return activities.map((a): Activity | null => a ? JSON.parse(a as string) : null).filter((a): a is Activity => a !== null);
+}
+
 export async function saveBounty(bounty: Bounty): Promise<void> {
   await redis.set(`bounty:${bounty.id}`, JSON.stringify(bounty));
   await redis.sadd('bounties:all', bounty.id);
