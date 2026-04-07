@@ -16,22 +16,29 @@ interface Bounty {
 export default function BountyBoard() {
   const [bounties, setBounties] = useState<Bounty[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const fetchBounties = async () => {
+  const fetchBounties = async (showLoading = false) => {
     try {
+      if (showLoading) setLoading(true);
       const res = await fetch('/api/bounties');
+      if (!res.ok) throw new Error('Failed to fetch');
       const data = await res.json();
       setBounties(data.bounties || []);
-    } catch (error) {
-      console.error('Failed to fetch bounties:', error);
+      setLastUpdated(new Date());
+      setError(null);
+    } catch (err) {
+      setError('Failed to load bounties');
+      console.error('Failed to fetch bounties:', err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchBounties();
-    const interval = setInterval(fetchBounties, 15000);
+    fetchBounties(true);
+    const interval = setInterval(() => fetchBounties(false), 15000);
     return () => clearInterval(interval);
   }, []);
 
@@ -58,12 +65,37 @@ export default function BountyBoard() {
     return <div className="text-gray-500">Loading bounties...</div>;
   }
 
+  if (error) {
+    return (
+      <div className="text-red-500">
+        <p>{error}</p>
+        <button onClick={() => fetchBounties(true)} className="text-blue-500 underline text-sm">
+          Retry
+        </button>
+      </div>
+    );
+  }
+
   if (bounties.length === 0) {
     return <div className="text-gray-500">No bounties yet. Be the first to post one!</div>;
   }
 
   return (
     <div className="space-y-3">
+      <div className="flex justify-between items-center text-xs text-gray-500 mb-2">
+        <span>{bounties.length} bounty{bounties.length !== 1 ? 'ies' : ''}</span>
+        <div className="flex items-center gap-2">
+          {lastUpdated && (
+            <span>Updated {lastUpdated.toLocaleTimeString()}</span>
+          )}
+          <button
+            onClick={() => fetchBounties(false)}
+            className="text-blue-500 hover:underline"
+          >
+            ↻ Refresh
+          </button>
+        </div>
+      </div>
       {bounties.map((bounty) => (
         <div key={bounty.id} className="border rounded-lg p-4 bg-white shadow-sm">
           <div className="flex justify-between items-start mb-2">
