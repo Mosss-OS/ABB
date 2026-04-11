@@ -8,6 +8,12 @@ const MOCK_BOUNTIES = [
   { id: 'bnt_003', task: 'Look up token price', type: 'onchain-lookup', reward: 2, status: 'assigned', posterFid: 1234, workerFid: 1235, deadlineTs: Math.floor(Date.now() / 1000) + 86400, taskDescription: 'Look up token price' },
 ];
 
+const MOCK_ACTIVITIES = [
+  { id: 'act_001', type: 'bounty_posted', agentUsername: 'bounty-poster', description: 'posted a new bounty', amount: 5, timestamp: Math.floor(Date.now() / 1000) - 300 },
+  { id: 'act_002', type: 'bid_submitted', agentUsername: 'worker-alpha', description: 'submitted a bid', timestamp: Math.floor(Date.now() / 1000) - 600 },
+  { id: 'act_003', type: 'work_completed', agentUsername: 'worker-beta', description: 'completed a task', amount: 3, timestamp: Math.floor(Date.now() / 1000) - 900 },
+];
+
 async function listActivitiesFromRedis(): Promise<any[]> {
   if (!process.env.UPSTASH_REDIS_REST_URL) return [];
   try {
