@@ -1,0 +1,512 @@
+import { nanoid } from 'nanoid';
+import { NeynarAPIClient } from '@neynar/nodejs-sdk';
+import { parseUnits, encodeFunctionData } from 'viem';
+import Groq from 'groq-sdk';
+
+const BOUNTY_PREFIX = 'bounty:';
+const BOUNTIES_OPEN_KEY = 'bounties:open';
+const BOUNTIES_ALL_KEY = 'bounties:all';
+const BIDS_PREFIX = 'bids:';
+const AGENT_STATS_PREFIX = 'agent:stats:';
+const ACTIVITIES_KEY = 'activities:recent';
+
+let redis: any = null;
+
+async function getRedis() {
+  if (!redis && process.env.UPSTASH_REDIS_REST_URL) {
+    const Redis = (await import('@upstash/redis')).Redis;
+    redis = new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    });
+  }
+  return redis;
+}
+
+export async function saveBounty(bounty: any): Promise<void> {
+  const r = await getRedis();
+  if (!r) return;
+  await r.set(`${BOUNTY_PREFIX}${bounty.id}`, JSON.stringify(bounty));
+  await r.sadd(BOUNTIES_ALL_KEY, bounty.id);
+  if (bounty.status === 'open') {
+    await r.sadd(BOUNTIES_OPEN_KEY, bounty.id);
+  }
+}
+
+export async function getBounty(id: string): Promise<any | null> {
+  const r = await getRedis();
+  if (!r) return null;
+  const data = await r.get(`${BOUNTY_PREFIX}${id}`);
+  return data ? JSON.parse(data) : null;
+}
+
+export async function updateBountyStatus(
+  id: string,
+  status: string,
+  extra?: Record<string, any>
+): Promise<void> {
+  const r = await getRedis();
+  if (!r) return;
+  const bounty = await getBounty(id);
+  if (!bounty) return;
+  const updated = { ...bounty, status, ...extra };
+  await r.set(`${BOUNTY_PREFIX}${id}`, JSON.stringify(updated));
+  if (status === 'open') {
+    await r.sadd(BOUNTIES_OPEN_KEY, id);
+  } else {
+    await r.srem(BOUNTIES_OPEN_KEY, id);
+  }
+}
+
+export async function listOpenBounties(): Promise<any[]> {
+  const r = await getRedis();
+  if (!r) return [];
+  const ids = await r.smembers(BOUNTIES_OPEN_KEY);
+  const bounties: any[] = [];
+  for (const id of ids) {
+    const bounty = await getBounty(id);
+    if (bounty && bounty.status === 'open') {
+      bounties.push(bounty);
+    }
+  }
+  return bounties.sort((a, b) => b.createdAt - a.createdAt);
+}
+
+export async function listAllBounties(): Promise<any[]> {
+  const r = await getRedis();
+  if (!r) return [];
+  const ids = await r.smembers(BOUNTIES_ALL_KEY);
+  const bounties: any[] = [];
+  for (const id of ids) {
+    const bounty = await getBounty(id);
+    if (bounty) bounties.push(bounty);
+  }
+  return bounties.sort((a, b) => b.createdAt - a.createdAt);
+}
+
+export async function saveBid(bid: any): Promise<void> {
+  const r = await getRedis();
+  if (!r) return;
+  await r.lpush(`${BIDS_PREFIX}${bid.bountyId}`, JSON.stringify(bid));
+}
+
+export async function getBidsForBounty(bountyId: string): Promise<any[]> {
+  const r = await getRedis();
+  if (!r) return [];
+  const bids = await r.lrange(`${BIDS_PREFIX}${bountyId}`, 0, -1);
+  return bids.map((b: string) => JSON.parse(b));
+}
+
+export async function incrementAgentStats(fid: number, usdcEarned: number): Promise<void> {
+  const r = await getRedis();
+  if (!r) return;
+  const key = `${AGENT_STATS_PREFIX}${fid}`;
+  await r.hincrbyfloat(key, 'totalEarnedUsdc', usdcEarned);
+  await r.hincrby(key, 'tasksCompleted', 1);
+}
+
+export async function getAgentStats(fid: number): Promise<{ tasksCompleted: number; totalEarnedUsdc: number }> {
+  const r = await getRedis();
+  if (!r) return { tasksCompleted: 0, totalEarnedUsdc: 0 };
+  const key = `${AGENT_STATS_PREFIX}${fid}`;
+  const stats = await r.hgetall(key);
+  if (!stats) return { tasksCompleted: 0, totalEarnedUsdc: 0 };
+  return {
+    tasksCompleted: Number(stats.tasksCompleted) || 0,
+    totalEarnedUsdc: Number(stats.totalEarnedUsdc) || 0,
+  };
+}
+
+export async function saveActivity(activity: any): Promise<void> {
+  const r = await getRedis();
+  if (!r) return;
+  const id = `act_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const fullActivity = { ...activity, id };
+  await r.lpush(ACTIVITIES_KEY, JSON.stringify(fullActivity));
+  await r.ltrim(ACTIVITIES_KEY, 0, 99);
+}
+
+export async function getRecentActivities(limit = 20): Promise<any[]> {
+  const r = await getRedis();
+  if (!r) return [];
+  const activities = await r.lrange(ACTIVITIES_KEY, 0, limit - 1);
+  return activities.map((a: string) => JSON.parse(a));
+}
+
+export async function getAgentWalletAddress(fid: number): Promise<string | null> {
+  const r = await getRedis();
+  if (!r) return null;
+  const key = `agent:wallet:${fid}`;
+  return await r.get(key);
+}
+
+export async function setAgentWalletAddress(fid: number, address: string): Promise<void> {
+  const r = await getRedis();
+  if (!r) return;
+  const key = `agent:wallet:${fid}`;
+  await r.set(key, address);
+}
+
+const BOUNTY_PREFIX_CAST = 'BOUNTY |';
+const BID_PREFIX_CAST = 'BID |';
+const RESULT_PREFIX_CAST = 'RESULT |';
+
+function parseBountyCast(text: string): any {
+  if (!text.startsWith(BOUNTY_PREFIX_CAST)) return null;
+  try {
+    const parts = text.slice(BOUNTY_PREFIX_CAST.length).split('|').map(s => s.trim());
+    const result: any = {};
+    for (const part of parts) {
+      const [key, ...valueParts] = part.split(':').map(s => s.trim());
+      if (key && valueParts.length > 0) {
+        result[key] = valueParts.join(':').trim();
+      }
+    }
+    if (!result.id || !result.task || !result.type || !result.reward || !result.deadline) return null;
+    return result;
+  } catch { return null; }
+}
+
+function parseBidCast(text: string): any {
+  if (!text.startsWith(BID_PREFIX_CAST)) return null;
+  try {
+    const parts = text.slice(BID_PREFIX_CAST.length).split('|').map(s => s.trim());
+    const result: any = {};
+    for (const part of parts) {
+      const [key, ...valueParts] = part.split(':').map(s => s.trim());
+      if (key && valueParts.length > 0) {
+        const value = valueParts.join(':').trim();
+        result[key] = key === 'etaHours' ? parseInt(value.replace('h', '')) || 0 : value;
+      }
+    }
+    if (!result.bountyId || !result.agent || !result.etaHours) return null;
+    return result;
+  } catch { return null; }
+}
+
+function parseResultCast(text: string): any {
+  if (!text.startsWith(RESULT_PREFIX_CAST)) return null;
+  try {
+    const parts = text.slice(RESULT_PREFIX_CAST.length).split('|').map(s => s.trim());
+    const result: any = {};
+    let outputParts: string[] = [];
+    for (const part of parts) {
+      if (part.startsWith('bounty:')) {
+        result.bountyId = part.replace('bounty:', '').trim();
+      } else if (part.startsWith('payment:')) {
+        continue;
+      } else if (result.bountyId) {
+        outputParts.push(part);
+      }
+    }
+    if (!result.bountyId) return null;
+    result.output = outputParts.join(' | ').trim();
+    return result;
+  } catch { return null; }
+}
+
+function inferTaskType(description: string): string {
+  const lower = description.toLowerCase();
+  if (lower.includes('translate') || lower.includes('español') || lower.includes('spanish') || lower.includes('french') || lower.includes('portuguese')) return 'translate';
+  if (lower.includes('summarize') || lower.includes('tldr') || lower.includes('summary')) return 'summarize';
+  if (lower.includes('wallet') || lower.includes('holdings') || lower.includes('onchain') || lower.includes('token') || lower.includes('balance')) return 'onchain_lookup';
+  return 'unknown';
+}
+
+const neynar = new NeynarAPIClient({ apiKey: process.env.NEYNAR_API_KEY || '' });
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+async function postCast(signerUuid: string, text: string, replyTo?: string): Promise<string> {
+  await sleep(500);
+  try {
+    const result = await (neynar as any).publishCast(signerUuid, text, replyTo ? { parent: replyTo } : {});
+    return result?.hash || result?.cast_hash || `mock-${Date.now()}`;
+  } catch (error) {
+    console.error('[abb] postCast error:', error);
+    return `mock-${Date.now()}`;
+  }
+}
+
+const SIGNER_UUID = process.env.BOUNTY_POSTER_SIGNER_UUID || '';
+const POSTER_FID = Number(process.env.BOUNTY_POSTER_FID) || 0;
+const POSTER_WALLET = process.env.BOUNTY_POSTER_WALLET || '';
+
+export async function createBounty(params: {
+  taskDescription: string;
+  taskType: string;
+  rewardUsdc: number;
+  deadlineHours: number;
+  posterFid?: number;
+  posterUsername?: string;
+}): Promise<any> {
+  const id = `bnt_${nanoid(8)}`;
+  const deadlineTs = Math.floor(Date.now() / 1000) + params.deadlineHours * 3600;
+  const poster = params.posterFid || POSTER_FID;
+
+  const castText = [
+    `BOUNTY | id: ${id}`,
+    `task: ${params.taskDescription}`,
+    `type: ${params.taskType}`,
+    `reward: ${params.rewardUsdc} USDC`,
+    `deadline: ${params.deadlineHours}h`,
+    `bid @abb`,
+  ].join(' | ');
+
+  let castHash = '';
+  try {
+    castHash = await postCast(SIGNER_UUID, castText);
+  } catch (error) {
+    console.error('[abb] createBounty: postCast failed:', error);
+  }
+
+  const bounty: any = {
+    id,
+    castHash,
+    posterFid: poster,
+    taskType: params.taskType,
+    taskDescription: params.taskDescription,
+    rewardUsdc: params.rewardUsdc,
+    deadlineTs,
+    status: 'open',
+    createdAt: Math.floor(Date.now() / 1000),
+  };
+
+  await saveBounty(bounty);
+  await saveActivity({
+    type: 'bounty_created',
+    bountyId: id,
+    actorFid: poster,
+    actorUsername: params.posterUsername || 'unknown',
+    timestamp: Math.floor(Date.now() / 1000),
+    details: `Created bounty: ${params.taskDescription}`,
+  });
+
+  console.log(`[abb] Created bounty ${id}: ${params.taskDescription}`);
+  return bounty;
+}
+
+export async function handleBid(cast: any): Promise<void> {
+  try {
+    const parsed = parseBidCast(cast.text);
+    if (!parsed) return;
+
+    const bounty = await getBounty(parsed.bountyId);
+    if (!bounty || bounty.status !== 'open') return;
+
+    const existingBids = await getBidsForBounty(parsed.bountyId);
+    if (existingBids.length > 0) return;
+
+    const bid: any = {
+      id: `bid_${nanoid(8)}`,
+      bountyId: parsed.bountyId,
+      bidderFid: cast.author?.fid || 0,
+      bidderUsername: cast.author?.username || 'unknown',
+      castHash: cast.hash,
+      etaHours: parsed.etaHours,
+      approach: parsed.approach,
+      submittedAt: Math.floor(Date.now() / 1000),
+    };
+
+    await saveBid(bid);
+    await saveActivity({
+      type: 'bid_submitted',
+      bountyId: parsed.bountyId,
+      actorFid: bid.bidderFid,
+      actorUsername: bid.bidderUsername,
+      timestamp: Math.floor(Date.now() / 1000),
+      details: `Bid: ${parsed.approach}`,
+    });
+
+    const assignedText = [
+      `ASSIGNED | bounty: ${parsed.bountyId}`,
+      `winner: @${cast.author?.username}`,
+      `execute task and reply with RESULT | bounty: ${parsed.bountyId} | payment: @abb`,
+    ].join(' | ');
+
+    await postCast(SIGNER_UUID, assignedText, bounty.castHash);
+    await updateBountyStatus(parsed.bountyId, 'assigned', { winnerFid: cast.author?.fid });
+    await saveActivity({
+      type: 'bounty_assigned',
+      bountyId: parsed.bountyId,
+      actorFid: POSTER_FID,
+      actorUsername: 'abb',
+      timestamp: Math.floor(Date.now() / 1000),
+      details: `Assigned to @${cast.author?.username}`,
+    });
+
+    console.log(`[abb] Assigned bounty ${parsed.bountyId} to @${cast.author?.username}`);
+  } catch (error) {
+    console.error('[abb] handleBid error:', error);
+  }
+}
+
+export async function handleResult(cast: any): Promise<void> {
+  try {
+    const parsed = parseResultCast(cast.text);
+    if (!parsed) return;
+
+    const bounty = await getBounty(parsed.bountyId);
+    if (!bounty || bounty.status !== 'assigned') return;
+    if (cast.author?.fid !== bounty.winnerFid) return;
+
+    const winnerWallet = await getAgentWalletAddress(bounty.winnerFid);
+    let txHash = '';
+
+    if (winnerWallet && POSTER_WALLET && process.env.PRIVY_APP_ID) {
+      try {
+        const { PrivyClient } = await import('@privy-io/server-auth');
+        const privy = new PrivyClient(process.env.PRIVY_APP_ID, process.env.PRIVY_APP_SECRET || '');
+        
+        const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
+        const amount = parseUnits(bounty.rewardUsdc.toString(), 6);
+        const data = encodeFunctionData({
+          abi: [{ name: 'transfer', type: 'function', inputs: [{ name: 'to', type: 'address' }, { name: 'amount', type: 'uint256' }], outputs: [{ type: 'bool' }] }],
+          functionName: 'transfer',
+          args: [winnerWallet as `0x${string}`, amount],
+        });
+
+        const tx = await privy.walletApi.ethereum.sendTransaction({
+          walletAddress: POSTER_WALLET,
+          caip2: 'eip155:8453',
+          transaction: { to: USDC_ADDRESS, data, value: '0' },
+        });
+        txHash = tx.hash;
+      } catch (err) {
+        console.error('[abb] Payment failed:', err);
+      }
+    }
+
+    await updateBountyStatus(bounty.id, 'completed', {
+      winnerCastHash: cast.hash,
+      settlementTxHash: txHash || undefined,
+    });
+
+    await incrementAgentStats(bounty.winnerFid, bounty.rewardUsdc);
+
+    const settledText = [
+      `SETTLED | bounty: ${bounty.id}`,
+      `paid: ${bounty.rewardUsdc} USDC`,
+      txHash ? `tx: https://basescan.org/tx/${txHash}` : '',
+      `agent: @${cast.author?.username} earned this`,
+    ].filter(Boolean).join(' | ');
+
+    await postCast(SIGNER_UUID, settledText, bounty.castHash);
+    await saveActivity({
+      type: 'payment_settled',
+      bountyId: bounty.id,
+      actorFid: POSTER_FID,
+      actorUsername: 'abb',
+      timestamp: Math.floor(Date.now() / 1000),
+      details: `Paid ${bounty.rewardUsdc} USDC to @${cast.author?.username}`,
+    });
+
+    console.log(`[abb] Settled bounty ${bounty.id}, paid ${bounty.rewardUsdc} USDC`);
+  } catch (error) {
+    console.error('[abb] handleResult error:', error);
+  }
+}
+
+export async function handleBountyRequest(cast: any): Promise<void> {
+  try {
+    const text = cast.text;
+    const authorFid = cast.author?.fid || 0;
+    const authorUsername = cast.author?.username || 'unknown';
+
+    const mentionMatch = text.match(/@abb\s+(.+?)(?:(\d+(?:\.\d+)?)\s*USDC)?$/i);
+    if (!mentionMatch) return;
+
+    const taskDescription = mentionMatch[1].trim();
+    const rewardUsdc = mentionMatch[2] ? parseFloat(mentionMatch[2]) : 2.0;
+    const taskType = inferTaskType(taskDescription);
+
+    await createBounty({
+      taskDescription,
+      taskType,
+      rewardUsdc,
+      deadlineHours: 24,
+      posterFid: authorFid,
+      posterUsername: authorUsername,
+    });
+
+    console.log(`[abb] Created bounty from request: ${taskDescription}`);
+  } catch (error) {
+    console.error('[abb] handleBountyRequest error:', error);
+  }
+}
+
+const WORKER_SIGNER = process.env.WORKER_ALPHA_SIGNER_UUID || '';
+const WORKER_FID = Number(process.env.WORKER_ALPHA_FID) || 0;
+const WORKER_USERNAME = process.env.WORKER_ALPHA_USERNAME || 'worker-alpha';
+
+export async function workerEvaluateBounty(cast: any): Promise<void> {
+  try {
+    const parsed = parseBountyCast(cast.text);
+    if (!parsed) return;
+
+    const taskType = parsed.type;
+    const capabilities = ['translate', 'summarize', 'onchain_lookup'];
+    if (!capabilities.includes(taskType)) return;
+
+    const bounty = await getBounty(parsed.id);
+    if (!bounty || bounty.status !== 'open') return;
+
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    if (nowSeconds > bounty.deadlineTs) return;
+
+    const bidText = [
+      `BID | bounty: ${parsed.id}`,
+      `agent: @${WORKER_USERNAME}`,
+      `eta: 2h`,
+      `approach: use AI to ${taskType === 'translate' ? 'translate' : 'summarize'} the content`,
+    ].join(' | ');
+
+    await postCast(WORKER_SIGNER, bidText, cast.hash);
+    console.log(`[worker] evaluateBounty: posted bid for bounty ${parsed.id}`);
+  } catch (error) {
+    console.error('[worker] evaluateBounty error:', error);
+  }
+}
+
+export async function workerExecuteAssignment(cast: any): Promise<void> {
+  try {
+    const text = cast.text || '';
+    const bountyIdMatch = text.match(/bounty:\s*(\S+)/);
+    if (!bountyIdMatch) return;
+
+    const bountyId = bountyIdMatch[1];
+    const bounty = await getBounty(bountyId);
+
+    if (!bounty || bounty.winnerFid !== WORKER_FID) return;
+
+    const groq = new Groq({ apiKey: process.env.GROK_API_KEY || '', baseURL: process.env.GROK_BASE_URL || 'https://api.x.ai/v1' });
+
+    let output = '';
+    try {
+      const completion = await groq.chat.completions.create({
+        model: 'llama-3.1-70b-versatile',
+        messages: [
+          { role: 'system', content: `You are an AI worker. Execute the task: ${bounty.taskDescription}` },
+          { role: 'user', content: bounty.taskDescription },
+        ],
+        max_tokens: 500,
+      });
+      output = completion.choices[0]?.message?.content || '[task failed]';
+    } catch (err) {
+      output = `[task error: ${err instanceof Error ? err.message : 'unknown'}]`;
+    }
+
+    const maxLength = 300;
+    if (output.length > maxLength) output = output.substring(0, maxLength - 3) + '...';
+
+    const resultText = [
+      `RESULT | bounty: ${bountyId}`,
+      output,
+      `payment: @abb please release`,
+    ].join(' | ');
+
+    await postCast(WORKER_SIGNER, resultText, bounty.castHash);
+    console.log(`[worker] executeAssignment: posted result for bounty ${bountyId}`);
+  } catch (error) {
+    console.error('[worker] executeAssignment error:', error);
+  }
+}

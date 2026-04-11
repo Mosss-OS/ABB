@@ -1,8 +1,71 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --abb-bg: #f8f9fa; /* Light Grey background like RegenAtlas */
+  --abb-bg-dark: #0c0c0c; /* Deep black for hero/sections */
+  --abb-bg-card: #ffffff; /* White cards */
+  --abb-cyan: #22d3ee;
+  --abb-cyan-dark: #0891b2;
+  --abb-text: #111827; /* Dark text for light mode */
+  --abb-text-muted: #6b7280;
+  --abb-border: #e5e7eb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  background: #fafafa;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--abb-bg);
+  color: var(--abb-text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: var(--abb-cyan);
+  color: var(--abb-bg);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--abb-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--abb-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--abb-text-muted);
+}
+
+@layer utilities {
+  .text-gradient {
+    background: linear-gradient(135deg, var(--abb-cyan) 0%, #06b6d4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .bg-gradient-dark {
+    background: linear-gradient(180deg, var(--abb-bg) 0%, var(--abb-bg-dark) 100%);
+  }
+
+  .border-gradient {
+    border-image: linear-gradient(135deg, var(--abb-cyan) 0%, #06b6d4 100%) 1;
+  }
 }

@@ -1,0 +1,65 @@
+import { NeynarAPIClient } from '@neynar/nodejs-sdk';
+
+export const neynar = new NeynarAPIClient({
+  apiKey: process.env.NEYNAR_API_KEY || '',
+});
+
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+export async function postCast(
+  signerUuid: string,
+  text: string,
+  replyTo?: string
+): Promise<string> {
+  await sleep(500);
+  
+  try {
+    const result = await (neynar as any).publishCast(signerUuid, text, replyTo ? { parent: replyTo } : {});
+    return result?.hash || result?.cast_hash || `mock-cast-${Date.now()}`;
+  } catch (error) {
+    console.error('[neynar] postCast error:', error);
+    return `mock-cast-${Date.now()}`;
+  }
+}
+
+export async function getCast(hash: string) {
+  try {
+    const result = await (neynar as any).fetchCast(hash);
+    return result;
+  } catch (error) {
+    console.error('[neynar] getCast error:', error);
+    return null;
+  }
+}
+
+export async function getUserByFid(fid: number) {
+  try {
+    const result = await (neynar as any).getUser(fid);
+    return result;
+  } catch (error) {
+    console.error(`[neynar] getUser error:`, error);
+    return null;
+  }
+}
+
+export async function getChannelCasts(channelId: string, limit = 25) {
+  try {
+    const result = await neynar.fetchFeedByChannelIds({
+      channelIds: [channelId],
+      limit,
+    });
+    return result.casts || [];
+  } catch (error) {
+    console.error('[neynar] getChannelCasts error:', error);
+    return [];
+  }
+}
+
+export async function lookupUser(username: string) {
+  try {
+    return await (neynar as any).userByUsername(username);
+  } catch (error) {
+    console.error(`[neynar] lookupUser error:`, error);
+    return null;
+  }
+}

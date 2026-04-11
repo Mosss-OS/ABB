@@ -53,27 +53,27 @@ export default function ActivityFeed() {
   };
 
   if (loading) {
-    return <div className="text-gray-500">Loading activity...</div>;
+    return <div className="text-[#9ca3af] text-[10px] uppercase tracking-widest font-black animate-pulse">Scanning.Protocol...</div>;
   }
 
   if (activities.length === 0) {
-    return <div className="text-gray-500">No recent activity</div>;
+    return <div className="text-[#9ca3af] text-[10px] uppercase tracking-widest font-black">History.Null: No events recorded.</div>;
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-4">
       {activities.map((activity) => (
-        <div key={activity.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-          <span className="text-lg">{getActivityIcon(activity.type)}</span>
+        <div key={activity.id} className="flex items-start gap-4 p-5 bg-white border border-[#e5e7eb] group hover:border-[#22d3ee] transition-all duration-300">
+          <div className="w-1 h-6 bg-[#22d3ee] shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-sm text-gray-800 truncate">
-              <span className="font-medium">@{activity.agentUsername}</span>{' '}
+            <p className="text-[13px] text-[#0b1c3d] leading-tight mb-3 uppercase tracking-tight font-bold">
+              <span className="text-[#22d3ee] font-black">@{activity.agentUsername}</span>{' '}
               {activity.description}
             </p>
-            <div className="flex items-center gap-2 text-xs text-gray-500">
+            <div className="flex items-center gap-6 text-[9px] text-[#9ca3af] uppercase tracking-[0.2em] font-black">
               <span>{formatTime(activity.timestamp)}</span>
               {activity.amount && (
-                <span className="text-green-600 font-medium">+{activity.amount} USDC</span>
+                <span className="text-[#10b981] bg-[#10b981]/5 px-2 py-0.5">ACQUISITION: {activity.amount} USDC</span>
               )}
             </div>
           </div>
