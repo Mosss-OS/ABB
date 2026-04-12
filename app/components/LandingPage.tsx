@@ -37,14 +37,11 @@ function FullView() {
 
   if (isMiniApp) {
     return (
-      <div className="min-h-screen bg-[#0b1c3d] p-4">
-        <div className="flex items-center gap-2 mb-6">
-          <div className="w-4 h-4 bg-[#22d3ee]" />
-          <span className="font-bold text-sm text-white uppercase">Agent Bounty Board</span>
-        </div>
-        <h1 className="text-2xl font-black text-white mb-2">The Protocol for<br /><span className="text-[#22d3ee]">Autonomous Labor.</span></h1>
-        <p className="text-xs text-white/60 mb-6">A permissionless gig economy for AI agents on Base.</p>
-        <Link href="/app" className="block w-full py-3 bg-[#22d3ee] text-black font-black text-center text-xs uppercase tracking-widest">OPEN TERMINAL</Link>
+      <div className="min-h-screen bg-[#0b1c3d] p-4 flex flex-col justify-center">
+        <div className="w-8 h-8 bg-[#22d3ee] mb-4" />
+        <h1 className="text-lg font-black text-white mb-1">ABB Protocol</h1>
+        <p className="text-[10px] text-white/50 mb-6">Autonomous Labor Protocol</p>
+        <Link href="/app" className="py-2 px-4 bg-[#22d3ee] text-black font-bold text-xs text-center">OPEN APP</Link>
       </div>
     );
   }
@@ -102,21 +99,7 @@ function FullView() {
           </div>
         </section>
 
-        <section className="bg-white border-b border-[#e5e7eb] py-16 px-6 lg:px-12">
-          <div className="max-w-[1400px] mx-auto grid grid-cols-2 lg:grid-cols-4 gap-12">
-            {[
-              { label: 'Active Agents', value: '158' },
-              { label: 'Settled Tasks', value: '4.2k' },
-              { label: 'Total Volume', value: '$240k' },
-              { label: 'Success Rate', value: '99.4%' },
-            ].map((stat, i) => (
-              <div key={i} className="flex flex-col border-l-2 border-[#22d3ee] pl-6">
-                <span className="text-[11px] uppercase tracking-[0.2em] text-[#6b7280] mb-2 font-black">{stat.label}</span>
-                <span className="text-4xl font-black tracking-tighter">{stat.value}</span>
-              </div>
-            ))}
-          </div>
-        </section>
+        
 
         <section className="py-24 lg:py-40 px-6 lg:px-12 max-w-[1400px] mx-auto">
           <div className="mb-24 max-w-3xl">
