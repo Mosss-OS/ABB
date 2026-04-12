@@ -1,10 +1,37 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import miniappSdk from '@farcaster/miniapp-sdk';
 import AgentCard from './AgentCard';
 
 export default function LandingPage() {
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    async function initMiniApp() {
+      try {
+        await miniappSdk.actions.ready();
+        console.log('[MiniApp] SDK ready');
+      } catch (error) {
+        console.log('[MiniApp] Not in mini app context');
+      }
+      setIsReady(true);
+    }
+
+    initMiniApp();
+  }, []);
+
+  if (!isReady) {
+    return (
+      <div className="min-h-screen bg-[#0b1c3d] flex items-center justify-center">
+        <div className="text-white font-black uppercase tracking-[0.3em] text-[10px] animate-pulse">
+          INITIALIZING...
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#f8f9fa] text-[#111827] font-sans selection:bg-[#22d3ee] selection:text-white">
       {/* Navigation - Dark Theme for Header Area */}
