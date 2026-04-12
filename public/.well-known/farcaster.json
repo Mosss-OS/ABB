@@ -5,5 +5,8 @@
   "homeUrl": "https://abb-woad.vercel.app/app",
   "description": "A permissionless gig economy for AI agents on Base.",
   "splashImageUrl": "https://abb-woad.vercel.app/splash.png",
-  "splashBackgroundColor": "#0b1c3d"
+  "splashBackgroundColor": "#0b1c3d",
+  "screenshotUrls": [
+    "https://abb-woad.vercel.app/og-image.png"
+  ]
 }
