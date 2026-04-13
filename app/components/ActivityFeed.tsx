@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 
 interface Activity {
   id: string;
-  type: 'bounty_posted' | 'bid_submitted' | 'work_completed' | 'payment_received';
+  type: string;
   agentFid: number;
   agentUsername: string;
   bountyId?: string;
@@ -13,70 +13,86 @@ interface Activity {
   timestamp: number;
 }
 
+const typeIcons: Record<string, string> = {
+  bounty_created: '📋',
+  bid_submitted: '✋',
+  task_executed: '✅',
+  bounty_settled: '💰',
+  bounty_assigned: '🎯',
+};
+
+const typeColors: Record<string, string> = {
+  bounty_created: 'bg-blue-50 border-blue-200',
+  bid_submitted: 'bg-yellow-50 border-yellow-200',
+  task_executed: 'bg-green-50 border-green-200',
+  bounty_settled: 'bg-cyan-50 border-cyan-200',
+  bounty_assigned: 'bg-purple-50 border-purple-200',
+};
+
 export default function ActivityFeed() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchActivities = async () => {
-      try {
-        const res = await fetch('/api/bounties');
-        const data = await res.json();
+    fetch('/api/bounties')
+      .then(res => res.json())
+      .then(data => {
         setActivities(data.activities || []);
-      } catch (error) {
-        console.error('Failed to fetch activities:', error);
-      } finally {
         setLoading(false);
-      }
-    };
-    fetchActivities();
+      })
+      .catch(() => setLoading(false));
   }, []);
-
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'bounty_posted': return '📝';
-      case 'bid_submitted': return '✋';
-      case 'work_completed': return '✅';
-      case 'payment_received': return '💰';
-      default: return '•';
-    }
-  };
 
   const formatTime = (timestamp: number) => {
     const diff = Date.now() - timestamp * 1000;
     const mins = Math.floor(diff / 60000);
-    if (mins < 1) return 'Just now';
-    if (mins < 60) return `${mins}m ago`;
+    if (mins < 1) return 'now';
+    if (mins < 60) return `${mins}m`;
     const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours}h ago`;
-    return `${Math.floor(hours / 24)}d ago`;
+    if (hours < 24) return `${hours}h`;
+    return `${Math.floor(hours / 24)}d`;
   };
 
   if (loading) {
-    return <div className="text-[#9ca3af] text-[10px] uppercase tracking-widest font-black animate-pulse">Scanning.Protocol...</div>;
+    return (
+      <div className="space-y-2">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="h-12 bg-gray-200 rounded animate-pulse" />
+        ))}
+      </div>
+    );
   }
 
   if (activities.length === 0) {
-    return <div className="text-[#9ca3af] text-[10px] uppercase tracking-widest font-black">History.Null: No events recorded.</div>;
+    return (
+      <div className="text-center py-6">
+        <div className="text-3xl mb-2">📭</div>
+        <div className="text-xs text-gray-400">No activity yet</div>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-4">
-      {activities.map((activity) => (
-        <div key={activity.id} className="flex items-start gap-4 p-5 bg-white border border-[#e5e7eb] group hover:border-[#22d3ee] transition-all duration-300">
-          <div className="w-1 h-6 bg-[#22d3ee] shrink-0" />
+    <div className="space-y-2">
+      {activities.slice(0, 10).map((activity) => (
+        <div 
+          key={activity.id} 
+          className={`flex items-center gap-3 p-3 rounded-lg border ${typeColors[activity.type] || 'bg-gray-50 border-gray-100'}`}
+        >
+          <span className="text-lg">{typeIcons[activity.type] || '•'}</span>
           <div className="flex-1 min-w-0">
-            <p className="text-[13px] text-[#0b1c3d] leading-tight mb-3 uppercase tracking-tight font-bold">
-              <span className="text-[#22d3ee] font-black">@{activity.agentUsername}</span>{' '}
+            <div className="text-xs font-medium text-gray-900 truncate">
               {activity.description}
-            </p>
-            <div className="flex items-center gap-6 text-[9px] text-[#9ca3af] uppercase tracking-[0.2em] font-black">
-              <span>{formatTime(activity.timestamp)}</span>
-              {activity.amount && (
-                <span className="text-[#10b981] bg-[#10b981]/5 px-2 py-0.5">ACQUISITION: {activity.amount} USDC</span>
-              )}
+            </div>
+            <div className="text-[10px] text-gray-500">
+              @{activity.agentUsername} · {formatTime(activity.timestamp)}
             </div>
           </div>
+          {activity.amount && (
+            <div className="text-xs font-bold text-cyan-600">
+              +{activity.amount} USDC
+            </div>
+          )}
         </div>
       ))}
     </div>

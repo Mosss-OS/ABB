@@ -11,13 +11,14 @@ interface AgentStats {
 }
 
 const AGENTS = [
-  { fid: 1234, username: 'bounty-poster', name: 'Bounty Poster' },
-  { fid: 1235, username: 'worker-alpha', name: 'Worker Alpha' },
-  { fid: 1236, username: 'worker-beta', name: 'Worker Beta' },
+  { fid: 1234, username: 'bounty-poster', name: 'Bounty Poster', emoji: '📋' },
+  { fid: 1235, username: 'worker-alpha', name: 'Worker Alpha', emoji: '⚡' },
+  { fid: 1236, username: 'worker-beta', name: 'Worker Beta', emoji: '🔧' },
 ];
 
 export default function AgentCard() {
   const [stats, setStats] = useState<Map<number, AgentStats>>(new Map());
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch('/api/agents')
@@ -28,9 +29,20 @@ export default function AgentCard() {
           statsMap.set(agent.fid, agent);
         });
         setStats(statsMap);
+        setLoading(false);
       })
-      .catch(console.error);
+      .catch(() => setLoading(false));
   }, []);
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="h-32 bg-gray-200 rounded-lg animate-pulse" />
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -43,18 +55,30 @@ export default function AgentCard() {
           totalEarnedUsdc: 0,
         };
 
+        const isWorking = agentStats.tasksCompleted > 0;
+
         return (
-          <div key={agent.fid} className="border border-[#e5e7eb] p-5 bg-white shadow-sm hover:border-[#22d3ee] transition-all duration-300">
-            <div className="text-[12px] font-black mb-1 text-[#0b1c3d] uppercase tracking-wider">@{agentStats.username}</div>
-            <div className="text-[10px] text-[#9ca3af] truncate font-mono mb-4">{agentStats.walletAddress}</div>
-            <div className="flex justify-between items-end">
-              <div className="flex flex-col">
-                <span className="text-[9px] uppercase tracking-widest text-[#6b7280] font-bold">Tasks</span>
-                <span className="text-xl font-black text-[#0b1c3d]">{agentStats.tasksCompleted}</span>
+          <div key={agent.fid} className={`relative overflow-hidden border rounded-xl p-4 transition-all duration-300 hover:shadow-lg ${
+            isWorking ? 'border-cyan-200 bg-gradient-to-br from-cyan-50 to-white' : 'border-gray-100 bg-white'
+          }`}>
+            {isWorking && (
+              <div className="absolute top-2 right-2 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+            )}
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xl">{agent.emoji}</span>
+              <div>
+                <div className="text-xs font-bold text-gray-900">@{agentStats.username}</div>
+                <div className="text-[10px] text-gray-400 truncate max-w-[120px]">{agent.name}</div>
               </div>
-              <div className="flex flex-col items-end">
-                <span className="text-[9px] uppercase tracking-widest text-[#6b7280] font-bold">Earned</span>
-                <span className="text-sm font-black text-[#22d3ee]">{agentStats.totalEarnedUsdc} USDC</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 mt-3">
+              <div className="text-center p-2 bg-gray-50 rounded-lg">
+                <div className="text-lg font-bold text-gray-900">{agentStats.tasksCompleted}</div>
+                <div className="text-[8px] text-gray-500 uppercase">Tasks</div>
+              </div>
+              <div className="text-center p-2 bg-cyan-50 rounded-lg">
+                <div className="text-lg font-bold text-cyan-600">{agentStats.totalEarnedUsdc}</div>
+                <div className="text-[8px] text-cyan-500 uppercase">USDC</div>
               </div>
             </div>
           </div>
