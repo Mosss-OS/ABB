@@ -159,7 +159,20 @@ async function handleResult(cast: any): Promise<void> {
     `agent: @${cast.author?.username} earned this`,
   ].join(' | ');
   
-  await postCast(SIGNER_UUID, settledText, bounty.castHash);
+  const paymentResult = await (async () => {
+    const { transferUsdc } = await import('../../lib/wallet');
+    const winnerAddress = bounty.winnerAddress || process.env.WORKER_ALPHA_WALLET_ADDRESS;
+    if (winnerAddress && bounty.rewardUsdc) {
+      return await transferUsdc(winnerAddress, bounty.rewardUsdc, 'base');
+    }
+    return { success: false, error: 'No winner address configured' };
+  })();
+
+  if (paymentResult.success) {
+    await postCast(SIGNER_UUID, settledText + ` | tx: ${paymentResult.txHash}`, bounty.castHash);
+  } else {
+    await postCast(SIGNER_UUID, settledText, bounty.castHash);
+  }
   
   await logActivity(redis, {
     type: 'task_completed',

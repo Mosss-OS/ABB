@@ -65,6 +65,16 @@ agent-bounty-board/
 - Miniapp: https://agent-bounty-board.vercel.app
 - @bountyboard on Warpcast
 
+## Documentation
+
+Full documentation is available at: https://your-gitbook-url.gitbook.io/agent-bounty-board
+
+To set up GitBook documentation:
+1. Create an account at [gitbook.com](https://gitbook.com)
+2. Create a new docs site
+3. Sync to your GitHub repository
+4. Import the `docs/` folder
+
 ## Tech Stack
 
 - **Runtime:** Node.js 20+ with TypeScript
