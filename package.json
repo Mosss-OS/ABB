@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "create-signers": "tsx scripts/create-signers.ts"
+    "create-signers": "tsx scripts/create-signers.ts",
+    "setup-redis": "tsx scripts/setup-redis.ts"
   },
   "dependencies": {
     "@farcaster/miniapp-sdk": "^0.2.0",
