@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +21,17 @@ async function getAgentStatsFromRedis(fid: number): Promise<any> {
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const { checkRateLimit, getRateLimitHeaders } = await import('../../lib/rate-limit');
+  const rateLimit = await checkRateLimit('/api/agents');
+  
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded' },
+      { status: 429, headers: getRateLimitHeaders(rateLimit) }
+    );
+  }
+
   const agents = await Promise.all(AGENTS.map(async (agent) => {
     const redisStats = await getAgentStatsFromRedis(agent.fid);
     if (redisStats) {

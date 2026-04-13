@@ -251,6 +251,16 @@ async function handleAssigned(cast: any): Promise<void> {
 
 export async function POST(req: NextRequest) {
   try {
+    const { checkRateLimit, getRateLimitHeaders } = await import('../../lib/rate-limit');
+    const rateLimit = await checkRateLimit('/api/webhook');
+    
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded' },
+        { status: 429, headers: getRateLimitHeaders(rateLimit) }
+      );
+    }
+
     const secret = process.env.NEYNAR_WEBHOOK_SECRET;
     
     if (secret) {

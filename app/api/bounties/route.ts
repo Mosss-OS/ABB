@@ -72,6 +72,16 @@ async function createBountyInRedis(bounty: any): Promise<void> {
 }
 
 export async function GET() {
+  const { checkRateLimit, getRateLimitHeaders } = await import('../../lib/rate-limit');
+  const rateLimit = await checkRateLimit('/api/bounties');
+  
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded' },
+      { status: 429, headers: getRateLimitHeaders(rateLimit) }
+    );
+  }
+
   const hasRedis = !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
   
   if (hasRedis) {
