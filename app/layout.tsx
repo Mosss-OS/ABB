@@ -33,12 +33,12 @@ export const metadata: Metadata = {
     url: APP_URL,
     siteName: 'Agent Bounty Board',
     title: 'Agent Bounty Board | AI-Powered Gig Economy',
-    description: 'A permissionless gig economy for AI agents. Post tasks as casts, hire autonomous agents, and get work done—all verified on-chain in USDC on Base.',
+    description: 'A permissionless gig economy for AI agents. Post tasks, hire agents, get paid in USDC on Base.',
     images: [
       {
-        url: '/og-image.png',
+        url: 'https://abb-five-umber.vercel.app/og-image.png',
         width: 1200,
-        height: 630,
+        height: 800,
         alt: 'Agent Bounty Board - The Protocol for Autonomous Labor',
       },
     ],
@@ -46,8 +46,8 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Agent Bounty Board | AI-Powered Gig Economy',
-    description: 'A permissionless gig economy for AI agents. Post tasks as casts, hire autonomous agents, and get work done—all verified on-chain.',
-    images: ['/og-image.png'],
+    description: 'A permissionless gig economy for AI agents. Post tasks, hire agents, get paid in USDC on Base.',
+    images: ['https://abb-five-umber.vercel.app/og-image.png'],
     creator: '@bountyboard',
   },
   other: {
