@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 interface Bounty {
   id: string;
@@ -26,10 +27,24 @@ const typeIcons: Record<string, string> = {
   custom: '⚙️',
 };
 
+interface Bid {
+  id: string;
+  bountyId: string;
+  agentFid: number;
+  agentUsername: string;
+  proposal: string;
+  priceUsdc: number;
+  status: string;
+  createdAt: number;
+}
+
 export default function BountyBoard() {
   const [bounties, setBounties] = useState<Bounty[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('all');
+  const [selectedBounty, setSelectedBounty] = useState<Bounty | null>(null);
+  const [bids, setBids] = useState<Bid[]>([]);
+  const [loadingBids, setLoadingBids] = useState(false);
 
   useEffect(() => {
     fetch('/api/bounties')
@@ -44,6 +59,37 @@ export default function BountyBoard() {
   const filteredBounties = filter === 'all' 
     ? bounties 
     : bounties.filter(b => b.status === filter);
+
+  const viewBids = async (bounty: Bounty) => {
+    setSelectedBounty(bounty);
+    setLoadingBids(true);
+    try {
+      const res = await fetch(`/api/bounties/${bounty.id}?includeBids=true`);
+      const data = await res.json();
+      setBids(data.bids || []);
+    } catch (err) {
+      console.error('Failed to fetch bids:', err);
+    }
+    setLoadingBids(false);
+  };
+
+  const selectWinner = async (bid: Bid) => {
+    try {
+      await fetch(`/api/bounties/${selectedBounty!.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          winnerBidId: bid.id,
+          workerFid: bid.agentFid,
+          workerUsername: bid.agentUsername,
+        }),
+      });
+      setSelectedBounty(null);
+      window.location.reload();
+    } catch (err) {
+      console.error('Failed to assign winner:', err);
+    }
+  };
 
   if (loading) {
     return (
@@ -118,11 +164,24 @@ export default function BountyBoard() {
                   Due: {new Date(bounty.deadlineTs * 1000).toLocaleDateString()}
                 </div>
               )}
-              {(bounty.bidCount ?? 0) > 0 && (
-                <div className="text-[8px] text-cyan-600 font-medium">
-                  {bounty.bidCount} bid{(bounty.bidCount ?? 0) !== 1 ? 's' : ''}
-                </div>
-              )}
+              <div className="flex gap-2">
+                {(bounty.bidCount ?? 0) > 0 && (
+                  <button
+                    onClick={() => viewBids(bounty)}
+                    className="text-[8px] text-cyan-600 font-medium hover:underline"
+                  >
+                    {bounty.bidCount} bid{(bounty.bidCount ?? 0) !== 1 ? 's' : ''}
+                  </button>
+                )}
+                {bounty.status === 'open' && (
+                  <Link
+                    href={`/submit-bid?bountyId=${bounty.id}`}
+                    className="text-[8px] bg-cyan-600 text-white px-2 py-0.5 rounded hover:bg-cyan-700"
+                  >
+                    Bid
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
         ))}
@@ -131,6 +190,46 @@ export default function BountyBoard() {
       {filteredBounties.length > 5 && (
         <div className="text-center text-[8px] text-gray-400">
           +{filteredBounties.length - 5} more
+        </div>
+      )}
+
+      {selectedBounty && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[80vh] overflow-y-auto">
+            <div className="p-4 border-b">
+              <div className="flex justify-between items-center">
+                <h3 className="font-bold text-sm">Bids for {selectedBounty.id}</h3>
+                <button onClick={() => setSelectedBounty(null)} className="text-gray-500">✕</button>
+              </div>
+            </div>
+            <div className="p-4">
+              {loadingBids ? (
+                <div className="text-center py-4 text-gray-500">Loading...</div>
+              ) : bids.length === 0 ? (
+                <div className="text-center py-4 text-gray-500">No bids yet</div>
+              ) : (
+                <div className="space-y-3">
+                  {bids.map(bid => (
+                    <div key={bid.id} className="p-3 border rounded-lg">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="font-medium text-xs">@{bid.agentUsername}</div>
+                        <div className="text-cyan-600 font-bold text-xs">{bid.priceUsdc} USDC</div>
+                      </div>
+                      <div className="text-[10px] text-gray-600 mb-2">{bid.proposal}</div>
+                      {selectedBounty.status === 'open' && (
+                        <button
+                          onClick={() => selectWinner(bid)}
+                          className="w-full bg-cyan-600 text-white text-[10px] py-1.5 rounded hover:bg-cyan-700"
+                        >
+                          Accept Bid
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
