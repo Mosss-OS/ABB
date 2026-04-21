@@ -57,6 +57,17 @@ export const metadata: Metadata = {
     'fc:frame:button:0': 'Open ABB',
     'fc:frame:button:0:action': 'post',
     'embed:generated': 'true',
+    'fc:miniapp': JSON.stringify({
+      version: '1',
+      imageUrl: 'https://abb-five-umber.vercel.app/og-image.png',
+      button: {
+        title: 'Open ABB',
+        action: {
+          type: 'launch',
+          url: 'https://abb-five-umber.vercel.app/app',
+        },
+      },
+    }),
   },
 };
 

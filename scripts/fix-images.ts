@@ -35,11 +35,11 @@ async function main() {
     200
   );
 
-  // preview.png: 391x470 -> 1280x2778
+  // preview.png: 391x470 -> 1284x2778 (correct for mini app)
   await resizeImage(
     join(PUBLIC_DIR, 'preview.png'),
     join(PUBLIC_DIR, 'preview.png'),
-    1280,
+    1284,
     2778
   );
 

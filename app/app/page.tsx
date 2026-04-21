@@ -8,19 +8,22 @@ import PostBountyForm from '../components/PostBountyForm';
 import Link from 'next/link';
 
 function AppContent() {
-  const { isSDKLoaded, context } = useMiniApp();
   const [isFrameReady, setIsFrameReady] = useState(false);
-
-  const isAuthenticated = !!context?.user;
-  const user = context?.user;
+  const [sdkLoaded, setSdkLoaded] = useState(false);
+  const [context, setContext] = useState<any>(null);
 
   useEffect(() => {
     async function initFrame() {
       try {
         await miniappSdk.actions.ready();
+        const ctx = await miniappSdk.context;
+        setContext(ctx);
+        setSdkLoaded(true);
         setIsFrameReady(true);
       } catch (error) {
+        console.log('SDK init error:', error);
         setIsFrameReady(true);
+        setSdkLoaded(true);
       }
     }
     initFrame();
@@ -34,7 +37,10 @@ function AppContent() {
     }
   }, []);
 
-  if (!isFrameReady || !isSDKLoaded) {
+  const isAuthenticated = !!context?.user;
+  const user = context?.user;
+
+  if (!isFrameReady) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#0b1c3d]">
         <div className="text-white/60 font-black uppercase text-[10px] animate-pulse">Loading...</div>
