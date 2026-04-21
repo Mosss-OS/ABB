@@ -8,26 +8,27 @@ import PostBountyForm from '../components/PostBountyForm';
 import Link from 'next/link';
 
 function AppContent() {
-  const [isFrameReady, setIsFrameReady] = useState(false);
-  const [sdkLoaded, setSdkLoaded] = useState(false);
-  const [context, setContext] = useState<any>(null);
+  const [mounted, setMounted] = useState(false);
+  const { isSDKLoaded, context } = useMiniApp();
+  
+  const isAuthenticated = !!context?.user;
+  const user = context?.user;
 
   useEffect(() => {
-    async function initFrame() {
+    setMounted(true);
+    
+    async function hideSplash() {
       try {
         await miniappSdk.actions.ready();
-        const ctx = await miniappSdk.context;
-        setContext(ctx);
-        setSdkLoaded(true);
-        setIsFrameReady(true);
       } catch (error) {
-        console.log('SDK init error:', error);
-        setIsFrameReady(true);
-        setSdkLoaded(true);
+        console.log('Splash hide error:', error);
       }
     }
-    initFrame();
-  }, []);
+    
+    if (isSDKLoaded) {
+      hideSplash();
+    }
+  }, [isSDKLoaded]);
 
   const handleSignIn = useCallback(async () => {
     try {
@@ -37,10 +38,7 @@ function AppContent() {
     }
   }, []);
 
-  const isAuthenticated = !!context?.user;
-  const user = context?.user;
-
-  if (!isFrameReady) {
+  if (!mounted || !isSDKLoaded) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#0b1c3d]">
         <div className="text-white/60 font-black uppercase text-[10px] animate-pulse">Loading...</div>
