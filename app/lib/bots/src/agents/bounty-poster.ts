@@ -9,6 +9,7 @@ export interface BountyParams {
   taskDescription: string;
   taskType: 'translate' | 'summarize' | 'onchain-lookup' | 'custom';
   rewardUsdc: number;
+  deadline: string; // ISO string or human readable
 }
 
 export async function createBounty(params: BountyParams): Promise<string | null> {
@@ -17,12 +18,18 @@ export async function createBounty(params: BountyParams): Promise<string | null>
     return null;
   }
 
-  const castText = [
-    `BOUNTY | id: ${params.id}`,
-    `task: ${params.taskDescription}`,
-    `type: ${params.taskType}`,
-    `reward: ${params.rewardUsdc} USDC`,
-  ].join(' | ');
+     // Link to the mini app root (the bounty board) since we don't have a single bounty view page yet
+     const bountyUrl = `${process.env.NEXT_PUBLIC_APP_URL}/app`;
+     const encodedUrl = encodeURIComponent(bountyUrl);
+     const miniAppLink = `fc://miniapp/${encodedUrl}`;
+
+      const castText = [
+        `NEW BOUNTY | ${params.taskDescription}`,
+        `reward: ${params.rewardUsdc} USDC`,
+        `type: ${params.taskType}`,
+        `deadline: ${params.deadline}`,
+        `link: ${miniAppLink}`,
+      ].join(' | ');
 
   const hash = await publishCast(SIGNER_UUID, castText);
 
