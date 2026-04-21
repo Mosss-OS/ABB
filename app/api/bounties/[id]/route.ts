@@ -31,7 +31,7 @@ async function listBidsForBounty(bountyId: string): Promise<any[]> {
   try {
     const { Redis } = await import('@upstash/redis');
     const redis = new Redis({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN });
-    const ids = await redis.smember(`bounty:${bountyId}:bids`);
+    const ids = await redis.smembers(`bounty:${bountyId}:bids`);
     const bids: any[] = [];
     for (const id of ids) {
       const data = await redis.get(`bid:${id}`);

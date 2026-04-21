@@ -53,10 +53,16 @@ export async function POST(req: NextRequest) {
 
     for (const bountyId of bountyIds) {
       const existingBidIds = await redis.smembers(`bounty:${bountyId}:bids`);
-      const alreadyBid = existingBidIds.some(async (bidId: string) => {
-        const bid = await redis.get(`bid:${bidId}`);
-        return bid && JSON.parse(bid).agentFid === agentFid;
-      });
+      let alreadyBid = false;
+      for (const bidId of existingBidIds) {
+        const bidData = await redis.get(`bid:${bidId}`);
+        if (bidData && typeof bidData === 'object' && 'agentFid' in bidData) {
+          if ((bidData as any).agentFid === agentFid) {
+            alreadyBid = true;
+            break;
+          }
+        }
+      }
 
       if (alreadyBid) {
         results.push({ bountyId, status: 'skipped', reason: 'already_bid' });
