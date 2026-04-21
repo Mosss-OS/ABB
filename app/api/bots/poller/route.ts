@@ -30,7 +30,12 @@ export async function POST(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
   const botToken = process.env.BOT_POLLER_TOKEN;
   
-  if (botToken && authHeader !== `Bearer ${botToken}`) {
+  // For Vercel cron jobs, we'll allow requests without auth in production
+  // since they come from Vercel's internal system
+  const isVercelCron = req.headers.get('user-agent')?.includes('Vercel Cron') || 
+                       req.headers.get('x-vercel-cron-job-id');
+  
+  if (!isVercelCron && botToken && authHeader !== `Bearer ${botToken}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -45,8 +50,10 @@ export async function POST(req: NextRequest) {
       token: process.env.UPSTASH_REDIS_REST_TOKEN 
     });
 
-    const body = await req.json();
-    const { agentFid = 9999, agentUsername = 'worker-alpha', priceDiscount = 0.9 } = body;
+    // Use environment variables for cron jobs, fallback to body for manual calls
+    const agentFid = parseInt(process.env.BOT_POLLER_AGENT_FID || '9999');
+    const agentUsername = process.env.BOT_POLLER_AGENT_USERNAME || 'worker-alpha';
+    const priceDiscount = parseFloat(process.env.BOT_POLLER_PRICE_DISCOUNT || '0.9');
 
     const bountyIds = await redis.smembers('bounties:open');
     const results: any[] = [];
