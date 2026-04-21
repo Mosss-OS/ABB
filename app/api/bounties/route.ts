@@ -28,11 +28,15 @@ async function listActivitiesFromRedis(): Promise<any[]> {
 }
 
 async function listAllBountiesFromRedis(): Promise<any[]> {
-  if (!process.env.UPSTASH_REDIS_REST_URL) return [];
+  if (!process.env.UPSTASH_REDIS_REST_URL) {
+    console.log('[api/bounties] Redis URL not set');
+    return [];
+  }
   try {
     const { Redis } = await import('@upstash/redis');
     const redis = new Redis({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN });
     const ids = await redis.smembers('bounties:all');
+    console.log('[api/bounties] Redis IDs found:', ids);
     const bounties: any[] = [];
     for (const id of ids) {
       const data = await redis.get(`bounty:${id}`);
@@ -46,13 +50,18 @@ async function listAllBountiesFromRedis(): Promise<any[]> {
 }
 
 async function createBountyInRedis(bounty: any): Promise<void> {
-  if (!process.env.UPSTASH_REDIS_REST_URL) return;
+  if (!process.env.UPSTASH_REDIS_REST_URL) {
+    console.log('[api/bounties] Skipping Redis - no URL');
+    return;
+  }
   try {
     const { Redis } = await import('@upstash/redis');
     const redis = new Redis({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN });
+    console.log('[api/bounties] Writing bounty to Redis:', bounty.id);
     await redis.set(`bounty:${bounty.id}`, JSON.stringify(bounty));
     await redis.sadd('bounties:all', bounty.id);
     await redis.sadd('bounties:open', bounty.id);
+    console.log('[api/bounties] Bounty written successfully');
     
     // Log Activity
     const activity = {
