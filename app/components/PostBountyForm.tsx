@@ -1,14 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { usePrivy } from '@privy-io/react-auth';
+import { useMiniApp } from '@neynar/react';
+import miniappSdk from '@farcaster/miniapp-sdk';
 
 interface PostBountyFormProps {
   onSuccess?: (castHash: string) => void;
 }
 
 export default function PostBountyForm({ onSuccess }: PostBountyFormProps) {
-  const { authenticated, user, login } = usePrivy();
+  const { context } = useMiniApp();
+  const isAuthenticated = !!context?.user;
+  const miniAppUser = context?.user;
   const [taskDescription, setTaskDescription] = useState('');
   const [rewardUsdc, setRewardUsdc] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -17,8 +20,8 @@ export default function PostBountyForm({ onSuccess }: PostBountyFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!authenticated || !user?.farcaster) {
-      login();
+    if (!isAuthenticated || !miniAppUser) {
+      await miniappSdk.actions.signIn({ nonce: Date.now().toString() });
       return;
     }
     
@@ -34,8 +37,8 @@ export default function PostBountyForm({ onSuccess }: PostBountyFormProps) {
           taskType: 'translate',
           rewardUsdc,
           deadlineHours: 24,
-          posterFid: user.farcaster.fid,
-          posterUsername: user.farcaster.username,
+          posterFid: miniAppUser.fid,
+          posterUsername: miniAppUser.username,
         }),
       });
 

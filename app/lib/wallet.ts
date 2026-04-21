@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { isPrivyReady, sendFromWallet } from './privy-wallets';
 
 const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
 const BASE_RPC = process.env.BASE_RPC_URL || 'https://base-mainnet.g.alchemy.com/v2/demo';
@@ -27,20 +28,35 @@ export async function getBalance(address: string): Promise<number> {
 export async function transferUsdc(
   to: string,
   amount: number,
-  network: 'base' | 'base-sepolia' = 'base'
+  network: 'base' | 'base-sepolia' = 'base',
+  fromWalletAddress?: string
 ): Promise<{ success: boolean; txHash?: string; error?: string }> {
+  const usePrivy = isPrivyReady() && !!fromWalletAddress;
   const privateKey = process.env.BOUNTY_BOARD_PRIVATE_KEY;
-  
+
+  if (usePrivy) {
+    return sendFromWallet(fromWalletAddress!, to, amount);
+  }
+
   if (!privateKey) {
     console.log('[wallet] No private key - using simulation mode');
-    return { 
-      success: true, 
+    return {
+      success: true,
       txHash: `0x${Math.random().toString(16).slice(2)}${Date.now()}`,
     };
   }
 
+  return usePrivateKeyTransfer(privateKey, to, amount, network);
+}
+
+async function usePrivateKeyTransfer(
+  privateKey: string,
+  to: string,
+  amount: number,
+  network: 'base' | 'base-sepolia'
+): Promise<{ success: boolean; txHash?: string; error?: string }> {
   try {
-    const rpcUrl = network === 'base' 
+    const rpcUrl = network === 'base'
       ? process.env.BASE_RPC_URL || 'https://base-mainnet.g.alchemy.com/v2/demo'
       : process.env.BASE_SEPOLIA_RPC_URL || 'https://base-sepolia.g.alchemy.com/v2/demo';
 

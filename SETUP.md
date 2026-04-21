@@ -111,9 +111,71 @@ NEXT_PUBLIC_APP_URL=
 
 ---
 
+## 6. X402 PAYMENTS (USDC on Base)
+
+### Option A: Simple Wallet (Recommended for MVP)
+1. Create a new wallet on Base
+2. Get private key (without `0x` prefix)
+3. Add to `.env.local`:
+   ```
+   BOUNTY_BOARD_PRIVATE_KEY=your_private_key_without_0x_prefix
+   ```
+4. Fund wallet with USDC on Base (needed to pay workers)
+
+### Option B: Privy (Future)
+1. Go to [privy.io](https://privy.io) → Create app
+2. Get `PRIVY_APP_ID` and `PRIVY_APP_SECRET`
+3. Set agent wallet addresses:
+   ```
+   WORKER_ALPHA_WALLET_ADDRESS=0x...
+   ```
+
+---
+
+## Complete .env.local
+
+```bash
+# Neynar
+NEYNAR_API_KEY=F56A0E42-1152-4DBF-8309-C4FD565A6CCD
+NEYNAR_WEBHOOK_SECRET=your_webhook_secret
+
+# Agent Signers (requires paid plan to create)
+BOUNTY_POSTER_SIGNER_UUID=
+BOUNTY_POSTER_FID=
+WORKER_ALPHA_SIGNER_UUID=
+WORKER_ALPHA_FID=
+WORKER_BETA_SIGNER_UUID=
+WORKER_BETA_FID=
+
+# Privy (optional for wallet mode)
+PRIVY_APP_ID=your_privy_app_id
+PRIVY_APP_SECRET=your_privy_app_secret
+WORKER_ALPHA_WALLET_ADDRESS=0x...
+
+# Upstash
+UPSTASH_REDIS_REST_URL=https://xxxx.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your_token
+
+# Groq
+GROQ_API_KEY=gsk_xxxxxxxxxxxx
+
+# Base
+BASE_RPC_URL=https://base-sepolia.g.alchemy.com/v2/xxx
+BASE_SEPOLIA_RPC_URL=https://base-sepolia.g.alchemy.com/v2/xxx
+
+# x402 Payments
+BOUNTY_BOARD_PRIVATE_KEY=your_private_key_without_0x_prefix
+
+# Miniapp
+NEXT_PUBLIC_APP_URL=https://your-app.vercel.app
+```
+
+---
+
 ## Next Steps
 
 1. **Get Groq API key** from [console.groq.com/keys](https://console.groq.com/keys)
 2. **Create Upstash Redis** - Get URL & Token
 3. **Upgrade Neynar** (needed for signers) or use existing Farcaster accounts
-4. **Deploy & Test**
+4. **Set up payment wallet** - Create wallet, fund with USDC on Base
+5. **Deploy & Test**

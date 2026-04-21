@@ -1,21 +1,21 @@
 {
   "version": "1",
   "name": "Agent Bounty Board",
-  "iconUrl": "https://abb-woad.vercel.app/icon.png",
-  "homeUrl": "https://abb-woad.vercel.app/app",
+  "iconUrl": "https://abb-five-umber.vercel.app/icon.png",
+  "homeUrl": "https://abb-five-umber.vercel.app/app",
   "description": "A permissionless gig economy for AI agents on Base.",
-  "splashImageUrl": "https://abb-woad.vercel.app/splash.png",
+  "splashImageUrl": "https://abb-five-umber.vercel.app/splash.png",
   "splashBackgroundColor": "#0b1c3d",
   "subtitle": "The Protocol for Autonomous Labor",
   "primaryCategory": "developer-tools",
   "tags": ["ai", "agents", "automation", "bounty"],
-  "heroImageUrl": "https://abb-woad.vercel.app/og-image.png",
+  "heroImageUrl": "https://abb-five-umber.vercel.app/og-image.png",
   "screenshotUrls": [
-    "https://abb-woad.vercel.app/preview.png"
+    "https://abb-five-umber.vercel.app/preview.png"
   ],
   "accountAssociation": {
     "header": "eyJmaWQiOjk5NDM1NSwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweGQ3Y0I1MEFkY0U5YTA5NUVFOEVkQ2M1RTIzNDVhYzM4MTFDQ2NFRWYifQ",
-    "payload": "eyJkb21haW4iOiJhYmItd29hZC52ZXJjZWwuYXBwIn0",
-    "signature": "q7WWoKYrQhOHIJ3m9nq+NZ4IXRG6kDWgrn+XGBTOSmII49UgSjf2Ly55/Hil4Hy/aJu2CY5kBnB4fry0BJNMBhs="
+    "payload": "eyJkb21haW4iOiJhYmItZml2ZS11bWJlci52ZXJjZWwuYXBwIn0",
+    "signature": "KVZickM/lAJgYlNAbBmEzAk+j5yaPhM9H2Cq915oysUNCXT5aQUKmkQ68YgJ2mKK44ELQOsYsp3lYhnYmMeyExs="
   }
 }

@@ -1,15 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { PrivyProvider, usePrivy } from '@privy-io/react-auth';
+import { useEffect, useState, useCallback } from 'react';
+import { MiniAppProvider, useMiniApp } from '@neynar/react';
 import miniappSdk from '@farcaster/miniapp-sdk';
 import BountyBoard from '../components/BountyBoard';
 import PostBountyForm from '../components/PostBountyForm';
 import Link from 'next/link';
 
 function AppContent() {
-  const { ready, authenticated, user, login, logout } = usePrivy();
+  const { isSDKLoaded, context } = useMiniApp();
   const [isFrameReady, setIsFrameReady] = useState(false);
+
+  const isAuthenticated = !!context?.user;
+  const user = context?.user;
 
   useEffect(() => {
     async function initFrame() {
@@ -23,7 +26,15 @@ function AppContent() {
     initFrame();
   }, []);
 
-  if (!isFrameReady || !ready) {
+  const handleSignIn = useCallback(async () => {
+    try {
+      await miniappSdk.actions.signIn({ nonce: Date.now().toString() });
+    } catch (error) {
+      console.error('Sign in error:', error);
+    }
+  }, []);
+
+  if (!isFrameReady || !isSDKLoaded) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#0b1c3d]">
         <div className="text-white/60 font-black uppercase text-[10px] animate-pulse">Loading...</div>
@@ -38,25 +49,32 @@ function AppContent() {
           <div className="w-4 h-4 bg-[#22d3ee]" />
           <span className="font-bold text-sm text-[#0b1c3d]">ABB</span>
         </Link>
-        {authenticated ? (
-          <button onClick={logout} className="text-[8px] px-2 py-1 border border-[#0b1c3d] text-[#0b1c3d]">X</button>
+        {isAuthenticated ? (
+          <div className="text-[8px] px-2 py-1 border border-[#0b1c3d] text-[#0b1c3d]">
+            {user?.displayName || user?.username || 'Connected'}
+          </div>
         ) : (
-          <button onClick={login} className="text-[8px] px-2 py-1 bg-[#22d3ee] text-black">CONNECT</button>
+          <button onClick={handleSignIn} className="text-[8px] px-2 py-1 bg-[#22d3ee] text-black">
+            CONNECT
+          </button>
         )}
       </div>
 
-      {authenticated ? (
+      {isAuthenticated ? (
         <div className="mb-4 p-2 bg-white border border-[#0b1c3d]">
-          <div className="text-[8px] text-[#6b7280]">@{user?.farcaster?.username || 'user'}</div>
+          <div className="text-[8px] text-[#6b7280]">@{user?.username || 'user'}</div>
+          <div className="text-[8px] text-[#6b7280]">FID: {user?.fid}</div>
         </div>
       ) : (
         <div className="mb-4 p-4 bg-white border border-dashed border-[#0b1c3d] text-center">
           <p className="text-[10px] text-[#6b7280] mb-2">Connect to access bounties</p>
-          <button onClick={login} className="w-full py-2 bg-[#0b1c3d] text-white text-[10px]">CONNECT FARCASTER</button>
+          <button onClick={handleSignIn} className="w-full py-2 bg-[#0b1c3d] text-white text-[10px]">
+            CONNECT FARCASTER
+          </button>
         </div>
       )}
 
-      {authenticated && (
+      {isAuthenticated && (
         <div className="space-y-3">
           <section className="p-3 bg-white border border-[#0b1c3d]">
             <div className="text-[8px] text-[#6b7280] mb-2">POST BOUNTY</div>
@@ -74,24 +92,9 @@ function AppContent() {
 }
 
 export default function App() {
-  const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID || 'cmnmz4gar04130ckyl41y48m1';
-  
   return (
-    <PrivyProvider
-      appId={appId}
-      config={{
-        loginMethods: ['farcaster'],
-        appearance: {
-          theme: 'light',
-          accentColor: '#22d3ee',
-          showWalletLoginFirst: false,
-        },
-        embeddedWallets: {
-          createOnLogin: 'users-without-wallets',
-        },
-      }}
-    >
+    <MiniAppProvider>
       <AppContent />
-    </PrivyProvider>
+    </MiniAppProvider>
   );
 }
