@@ -23,8 +23,9 @@ async function listAllBountiesFromRedis(): Promise<any[]> {
   try {
     const { Redis } = await import('@upstash/redis');
     const redis = new Redis({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN });
+    console.log('[api/bounties] Connected to Redis');
     const ids = await redis.smembers('bounties:all');
-    console.log('[api/bounties] Redis IDs found:', ids);
+    console.log('[api/bounties] Redis IDs found:', ids, 'count:', ids.length);
     const bounties: any[] = [];
     for (const id of ids) {
       const data = await redis.get(`bounty:${id}`);
@@ -33,8 +34,12 @@ async function listAllBountiesFromRedis(): Promise<any[]> {
         const bidCount = await redis.get(`bounty:${id}:bidCount`);
         bounty.bidCount = parseInt((bidCount as string) || '0');
         bounties.push(bounty);
+        console.log('[api/bounties] Loaded bounty:', bounty.id);
+      } else {
+        console.log('[api/bounties] No data found for bounty ID:', id);
       }
     }
+    console.log('[api/bounties] Returning', bounties.length, 'bounties');
     return bounties.sort((a, b) => b.createdAt - a.createdAt);
   } catch (error) {
     console.error('[api/bounties] Redis error:', error);
@@ -83,17 +88,20 @@ export async function GET() {
       { status: 429, headers: getRateLimitHeaders(rateLimit) }
     );
   }
-
+  
   const hasRedis = !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
+  console.log('[api/bounties] GET request - hasRedis:', hasRedis);
   
   if (!hasRedis) {
     return NextResponse.json({ 
       error: 'Redis not configured' 
     }, { status: 503 });
   }
-
+  
+  console.log('[api/bounties] GET request - fetching from Redis');
   const bounties = await listAllBountiesFromRedis();
   const activities = await listActivitiesFromRedis();
+  console.log('[api/bounties] GET request - returning', bounties.length, 'bounties,', activities.length, 'activities');
   
   return NextResponse.json({ 
     bounties, 

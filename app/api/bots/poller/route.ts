@@ -33,9 +33,13 @@ export async function POST(req: NextRequest) {
   // For Vercel cron jobs, we'll allow requests without auth in production
   // since they come from Vercel's internal system
   const isVercelCron = req.headers.get('user-agent')?.includes('Vercel Cron') || 
-                       req.headers.get('x-vercel-cron-job-id');
+                       req.headers.get('x-vercel-cron-job-id') ||
+                       req.headers.get('x-vercel-cron'); // Additional Vercel cron header
   
-  if (!isVercelCron && botToken && authHeader !== `Bearer ${botToken}`) {
+  // For manual testing, we'll allow the request if the token is provided in body or header
+  const isManualCall = botToken && (authHeader === `Bearer ${botToken}` || false);
+  
+  if (!isVercelCron && !isManualCall) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
