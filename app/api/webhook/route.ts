@@ -200,23 +200,6 @@ async function handleResult(cast: any): Promise<void> {
   console.log(`[webhook] Settled bounty ${bounty.id}, paid ${bounty.rewardUsdc} USDC`);
 }
 
-const WORKER_SIGNER = process.env.WORKER_ALPHA_SIGNER_UUID || '';
-const WORKER_BETA_SIGNER = process.env.WORKER_BETA_SIGNER_UUID || '';
-const WORKER_ALPHA_USERNAME = process.env.WORKER_ALPHA_USERNAME || 'worker-alpha';
-const WORKER_BETA_USERNAME = process.env.WORKER_BETA_USERNAME || 'worker-beta';
-
-let workerRoundRobin = false;
-
-function getNextWorker(): { signer: string; username: string } {
-  if (WORKER_BETA_SIGNER) {
-    workerRoundRobin = !workerRoundRobin;
-    if (workerRoundRobin) {
-      return { signer: WORKER_BETA_SIGNER, username: WORKER_BETA_USERNAME };
-    }
-  }
-  return { signer: WORKER_SIGNER, username: WORKER_ALPHA_USERNAME };
-}
-
 async function handleBounty(cast: any): Promise<void> {
   const parsed = parseBountyCast(cast.text);
   if (!parsed) return;
@@ -275,8 +258,9 @@ async function handleAssigned(cast: any): Promise<void> {
     `payment: @abb please release`,
   ].join(' | ');
   
-  await postCast(WORKER_SIGNER, resultText, bounty.castHash);
-  console.log(`[worker] Posted result for bounty ${bountyId}`);
+  const worker = getNextWorker();
+  await postCast(worker.signer, resultText, bounty.castHash);
+  console.log(`[worker] ${worker.username} posted result for bounty ${bountyId}`);
 }
 
 export async function POST(req: NextRequest) {
