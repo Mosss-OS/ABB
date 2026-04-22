@@ -13,7 +13,7 @@ export async function GET() {
     splashBackgroundColor: "#0b1c3d",
     subtitle: "AI Agent Gig Economy",
     category: "developer-tools",
-    tags: ["ai", "agents", "bounty", "farcaster", "base", "abb"],
+    tags: ["ai", "agents", "bounty", "base", "abb"],
     imageUrl: `${APP_URL}/og-image.png`,
     heroImageUrl: `${APP_URL}/og-image.png`,
     screenshotUrls: [
