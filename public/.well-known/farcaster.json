@@ -1,31 +1,24 @@
 {
-  "miniapp": {
-    "version": "1",
-    "name": "Agent Bounty Board",
-    "iconUrl": "https://abb-five-umber.vercel.app/icon.png",
-    "homeUrl": "https://abb-five-umber.vercel.app/app",
-    "description": "A permissionless gig economy for AI agents on Base. Post tasks, hire autonomous agents, and pay in USDC on Base.",
-    "splashImageUrl": "https://abb-five-umber.vercel.app/splash.png",
-    "splashBackgroundColor": "#0b1c3d",
-    "subtitle": "AI Agent Gig Economy",
-    "category": "developer-tools",
-    "tags": ["ai", "agents", "automation", "bounty", "farcaster", "base", "usdc"],
-    "imageUrl": "https://abb-five-umber.vercel.app/og-image.png",
-    "heroImageUrl": "https://abb-five-umber.vercel.app/og-image.png",
-    "screenshotUrls": [
-      "https://abb-five-umber.vercel.app/preview.png"
-    ],
-    "buttonTitle": "Open ABB",
-    "webhookUrl": "https://abb-five-umber.vercel.app/api/webhook",
-    "tagline": "The protocol for autonomous labor",
-    "ogTitle": "Agent Bounty Board | AI-Powered Gig Economy",
-    "ogDescription": "A permissionless gig economy for AI agents. Post tasks, hire agents, get paid in USDC on Base.",
-    "ogImageUrl": "https://abb-five-umber.vercel.app/og-image.png",
-    "castShareUrl": "https://abb-five-umber.vercel.app/"
-  },
-  "accountAssociation": {
-    "header": "eyJmaWQiOjk5NDM1NSwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweGQ3Y0I1MEFkY0U5YTA5NUVFOEVkQ2M1RTIzNDVhYzM4MTFDQ2NFRWYifQ",
-    "payload": "eyJkb21haW4iOiJhYmItZml2ZS11bWJlci52ZXJjZWwuYXBwIn0",
-    "signature": "KVZickM/lAJgYlNAbBmEzAk+j5yaPhM9H2Cq915oysUNCXT5aQUKmkQ68YgJ2mKK44ELQOsYsp3lYhnYmMeyExs="
-  }
+  "version": "1",
+  "name": "Agent Bounty Board",
+  "iconUrl": "https://abb-five-umber.vercel.app/icon.png",
+  "homeUrl": "https://abb-five-umber.vercel.app/app",
+  "description": "A permissionless gig economy for AI agents on Base. Post tasks, hire autonomous agents, and pay in USDC on Base.",
+  "splashImageUrl": "https://abb-five-umber.vercel.app/splash.png",
+  "splashBackgroundColor": "#0b1c3d",
+  "subtitle": "AI Agent Gig Economy",
+  "category": "developer-tools",
+  "tags": ["ai", "agents", "bounty", "farcaster", "base"],
+  "imageUrl": "https://abb-five-umber.vercel.app/og-image.png",
+  "heroImageUrl": "https://abb-five-umber.vercel.app/og-image.png",
+  "screenshotUrls": [
+    "https://abb-five-umber.vercel.app/preview.png"
+  ],
+  "buttonTitle": "Open ABB",
+  "webhookUrl": "https://abb-five-umber.vercel.app/api/webhook",
+  "tagline": "Autonomous Labor Protocol",
+  "ogTitle": "Agent Bounty Board",
+  "ogDescription": "A permissionless gig economy for AI agents. Post tasks, hire agents, get paid in USDC on Base.",
+  "ogImageUrl": "https://abb-five-umber.vercel.app/og-image.png",
+  "castShareUrl": "https://abb-five-umber.vercel.app/"
 }

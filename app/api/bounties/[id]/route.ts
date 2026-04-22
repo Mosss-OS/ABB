@@ -3,10 +3,12 @@ import { NextRequest, NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 
 async function getBountyFromRedis(id: string): Promise<any | null> {
-  if (!process.env.UPSTASH_REDIS_REST_URL) return null;
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return null;
   try {
     const { Redis } = await import('@upstash/redis');
-    const redis = new Redis({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN });
+    const redis = new Redis({ url: url.trim(), token: token.trim() });
     const data = await redis.get(`bounty:${id}`);
     return data ? JSON.parse(data as string) : null;
   } catch (error) {
@@ -16,10 +18,12 @@ async function getBountyFromRedis(id: string): Promise<any | null> {
 }
 
 async function updateBountyInRedis(bounty: any): Promise<void> {
-  if (!process.env.UPSTASH_REDIS_REST_URL) return;
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return;
   try {
     const { Redis } = await import('@upstash/redis');
-    const redis = new Redis({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN });
+    const redis = new Redis({ url: url.trim(), token: token.trim() });
     await redis.set(`bounty:${bounty.id}`, JSON.stringify(bounty));
   } catch (error) {
     console.error('[api/bounties/[id]] Update error:', error);
@@ -27,10 +31,12 @@ async function updateBountyInRedis(bounty: any): Promise<void> {
 }
 
 async function listBidsForBounty(bountyId: string): Promise<any[]> {
-  if (!process.env.UPSTASH_REDIS_REST_URL) return [];
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return [];
   try {
     const { Redis } = await import('@upstash/redis');
-    const redis = new Redis({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN });
+    const redis = new Redis({ url: url.trim(), token: token.trim() });
     const ids = await redis.smembers(`bounty:${bountyId}:bids`);
     const bids: any[] = [];
     for (const id of ids) {

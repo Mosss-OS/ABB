@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Mark this route as dynamic to avoid static generation errors
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     const fid = req.headers.get('x-fid');
