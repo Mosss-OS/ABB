@@ -36,6 +36,20 @@ const typeIcons: Record<string, string> = {
   custom: '⚙️',
 };
 
+const statusConfig: Record<string, { color: string; bg: string; label: string; step: number }> = {
+  open: { color: 'text-green-400', bg: 'bg-green-500/20', label: 'Open for Bids', step: 1 },
+  assigned: { color: 'text-yellow-400', bg: 'bg-yellow-500/20', label: 'Work in Progress', step: 2 },
+  completed: { color: 'text-blue-400', bg: 'bg-blue-500/20', label: 'Work Submitted', step: 3 },
+  settled: { color: 'text-purple-400', bg: 'bg-purple-500/20', label: 'Paid', step: 4 },
+};
+
+const workflowSteps = [
+  { step: 1, label: 'Open' },
+  { step: 2, label: 'Assigned' },
+  { step: 3, label: 'Completed' },
+  { step: 4, label: 'Paid' },
+];
+
 export default function BountyDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -211,9 +225,14 @@ export default function BountyDetailPage() {
         </div>
 
         <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-4">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-xl">{typeIcons[bounty.type] || '⚡'}</span>
-            <span className="text-xs text-white/40">{bounty.id}</span>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">{typeIcons[bounty.type] || '⚡'}</span>
+              <span className="text-xs text-white/40">{bounty.id}</span>
+            </div>
+            <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusConfig[bounty.status]?.bg || 'bg-white/10'} ${statusConfig[bounty.status]?.color || 'text-white/60'}`}>
+              {statusConfig[bounty.status]?.label || bounty.status}
+            </span>
           </div>
           
           <h1 className="text-lg font-medium mb-4 leading-tight">{bounty.task}</h1>
@@ -223,11 +242,31 @@ export default function BountyDetailPage() {
               <div className="text-2xl font-bold text-cyan-400">{bounty.reward}</div>
               <div className="text-xs text-white/40">USDC</div>
             </div>
-            <div className={`px-3 py-1 rounded-full text-xs uppercase tracking-wide ${
-              bounty.status === 'open' ? 'bg-green-500/20 text-green-400' : 'bg-white/10 text-white/60'
-            }`}>
-              {bounty.status}
-            </div>
+          </div>
+        </div>
+
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-4">
+          <div className="text-xs text-white/40 mb-3 uppercase tracking-widest">Progress</div>
+          <div className="flex items-center justify-between">
+            {workflowSteps.map((s, i) => (
+              <div key={s.step} className="flex items-center flex-1">
+                <div className="flex flex-col items-center">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                    statusConfig[bounty.status]?.step || 0 >= s.step 
+                      ? 'bg-cyan-500 text-black' 
+                      : 'bg-white/10 text-white/40'
+                  }`}>
+                    {s.step}
+                  </div>
+                  <span className={`text-[10px] mt-1 ${statusConfig[bounty.status]?.step || 0 >= s.step ? 'text-white' : 'text-white/40'}`}>
+                    {s.label}
+                  </span>
+                </div>
+                {i < workflowSteps.length - 1 && (
+                  <div className={`flex-1 h-0.5 mx-1 ${statusConfig[bounty.status]?.step || 0 > s.step ? 'bg-cyan-500' : 'bg-white/10'}`} />
+                )}
+              </div>
+            ))}
           </div>
         </div>
 
@@ -239,6 +278,36 @@ export default function BountyDetailPage() {
           <div className="bg-white/5 border border-white/10 rounded-xl p-3">
             <div className="text-xs text-white/40 mb-1">Due</div>
             <div className="text-sm">{new Date(bounty.deadlineTs * 1000).toLocaleDateString()}</div>
+          </div>
+        </div>
+
+        {bounty.workerUsername && (
+          <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-4">
+            <div className="text-xs text-white/40 mb-2 uppercase tracking-widest">Worker</div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400 text-sm">
+                  {bounty.workerUsername[0].toUpperCase()}
+                </div>
+                <span className="text-sm font-medium">@{bounty.workerUsername}</span>
+              </div>
+              {bounty.status === 'settled' && (
+                <span className="text-xs text-green-400">✓ Paid {bounty.reward} USDC</span>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className={`p-4 rounded-xl mb-4 ${statusConfig[bounty.status]?.bg || 'bg-white/5'}`}>
+          <div className="text-xs text-white/40 mb-1">
+            {bounty.status === 'open' && 'Waiting for agents to bid...'}
+            {bounty.status === 'assigned' && 'Work in progress...'}
+            {bounty.status === 'completed' && 'Work submitted, awaiting payment...'}
+            {bounty.status === 'settled' && 'Payment complete!'}
+            {!statusConfig[bounty.status] && 'Unknown status'}
+          </div>
+          <div className={`text-sm font-medium ${statusConfig[bounty.status]?.color || 'text-white/60'}`}>
+            {statusConfig[bounty.status]?.label || bounty.status}
           </div>
         </div>
 
@@ -269,10 +338,19 @@ export default function BountyDetailPage() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.1 }}
-              className="bg-white/5 border border-white/10 rounded-xl p-4 mb-3"
+              className={`bg-white/5 border rounded-xl p-4 mb-3 ${
+                bid.status === 'accepted' ? 'border-green-500/30' : 'border-white/10'
+              }`}
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">@{bid.agentUsername}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">@{bid.agentUsername}</span>
+                  {bid.status === 'accepted' && (
+                    <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">
+                      Selected
+                    </span>
+                  )}
+                </div>
                 <span className="text-sm font-bold text-cyan-400">{bid.priceUsdc} USDC</span>
               </div>
               <p className="text-xs text-white/60 mb-2">{bid.proposal}</p>
@@ -286,7 +364,7 @@ export default function BountyDetailPage() {
                 </button>
               )}
               {bid.status === 'accepted' && (
-                <span className="text-xs text-green-400">✓ Accepted</span>
+                <span className="text-xs text-green-400">✓ Accepted - Working on this</span>
               )}
             </motion.div>
           ))}

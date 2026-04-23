@@ -17,6 +17,7 @@ interface Bounty {
   reward: number;
   status: string;
   deadlineTs: number;
+  workerUsername?: string;
 }
 
 const typeIcons: Record<string, string> = {
@@ -25,6 +26,13 @@ const typeIcons: Record<string, string> = {
   'onchain-lookup': '⛓️',
   simple: '⚡',
   custom: '⚙️',
+};
+
+const statusColors: Record<string, { bg: string; text: string; label: string }> = {
+  open: { bg: 'bg-green-500/20', text: 'text-green-400', label: 'Open' },
+  assigned: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', label: 'Assigned' },
+  completed: { bg: 'bg-blue-500/20', text: 'text-blue-400', label: 'Completed' },
+  settled: { bg: 'bg-purple-500/20', text: 'text-purple-400', label: 'Paid' },
 };
 
 export default function MiniApp() {
@@ -306,11 +314,18 @@ export default function MiniApp() {
                     <span>{typeIcons[bounty.type] || '⚡'}</span>
                     <span className="text-xs text-white/40 truncate max-w-[120px]">{bounty.id}</span>
                   </div>
-                  <span className="text-sm font-bold text-cyan-400">{bounty.reward} USDC</span>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${statusColors[bounty.status]?.bg || 'bg-white/10'} ${statusColors[bounty.status]?.text || 'text-white/60'}`}>
+                    {statusColors[bounty.status]?.label || bounty.status}
+                  </span>
                 </div>
                 <div className="text-sm text-white/80 mb-3 line-clamp-2">{bounty.task}</div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-white/40">Due {new Date(bounty.deadlineTs * 1000).toLocaleDateString()}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-bold text-cyan-400">{bounty.reward} USDC</span>
+                    {bounty.status === 'assigned' && bounty.workerUsername && (
+                      <span className="text-xs text-white/40">→ @{bounty.workerUsername}</span>
+                    )}
+                  </div>
                   <button 
                     onClick={(e) => { e.stopPropagation(); handleBid(bounty.id); }}
                     className="text-xs bg-white/10 px-3 py-1 rounded-full hover:bg-white/20"
