@@ -5,14 +5,16 @@
 @tailwind utilities;
 
 :root {
-  --abb-bg: #f8f9fa; /* Light Grey background like RegenAtlas */
-  --abb-bg-dark: #0c0c0c; /* Deep black for hero/sections */
-  --abb-bg-card: #ffffff; /* White cards */
-  --abb-cyan: #22d3ee;
-  --abb-cyan-dark: #0891b2;
-  --abb-text: #111827; /* Dark text for light mode */
-  --abb-text-muted: #6b7280;
-  --abb-border: #e5e7eb;
+  --meat-red: #ff4d00;
+  --meat-red-dark: #cc3d00;
+  --meat-orange: #ff6b00;
+  --meat-yellow: #ffaa00;
+  --dark-bg: #050505;
+  --dark-card: #0c0c0c;
+  --dark-border: #1a1a1a;
+  --dark-hover: #151515;
+  --dark-text: #e5e7eb;
+  --dark-muted: #9ca3af;
 }
 
 * {
@@ -24,16 +26,16 @@ html {
 }
 
 body {
-  background: var(--abb-bg);
-  color: var(--abb-text);
+  background: var(--dark-bg);
+  color: var(--dark-text);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 ::selection {
-  background: var(--abb-cyan);
-  color: var(--abb-bg);
+  background: var(--meat-red);
+  color: white;
 }
 
 ::-webkit-scrollbar {
@@ -41,31 +43,43 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--abb-bg);
+  background: var(--dark-bg);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--abb-border);
+  background: var(--dark-border);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--abb-text-muted);
+  background: var(--dark-muted);
 }
 
 @layer utilities {
-  .text-gradient {
-    background: linear-gradient(135deg, var(--abb-cyan) 0%, #06b6d4 100%);
+  .text-gradient-meat {
+    background: linear-gradient(135deg, var(--meat-red) 0%, var(--meat-orange) 50%, var(--meat-yellow) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  .bg-gradient-dark {
-    background: linear-gradient(180deg, var(--abb-bg) 0%, var(--abb-bg-dark) 100%);
+  .bg-gradient-meat {
+    background: linear-gradient(135deg, var(--meat-red) 0%, var(--meat-orange) 100%);
   }
 
-  .border-gradient {
-    border-image: linear-gradient(135deg, var(--abb-cyan) 0%, #06b6d4 100%) 1;
+  .bg-gradient-warm {
+    background: linear-gradient(180deg, #0c0c0c 0%, #1a0a00 100%);
+  }
+
+  .border-meat {
+    border-color: var(--meat-red);
+  }
+
+  .glow-meat {
+    box-shadow: 0 0 20px rgba(255, 77, 0, 0.3);
+  }
+
+  .glow-meat-strong {
+    box-shadow: 0 0 30px rgba(255, 77, 0, 0.5), 0 0 60px rgba(255, 107, 0, 0.3);
   }
 }
