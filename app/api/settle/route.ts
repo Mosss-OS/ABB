@@ -9,17 +9,31 @@ async function getRedis() {
 }
 
 async function getBountyFromRedis(id: string, redis: any): Promise<any | null> {
-  const data = await redis.get(`bounty:${id}`);
-  return data ? (typeof data === 'string' ? JSON.parse(data) : data) : null;
+  try {
+    const data = await redis.get(`bounty:${id}`);
+    return data ? (typeof data === 'string' ? JSON.parse(data) : data) : null;
+  } catch (e) {
+    console.error('[settle] getBountyFromRedis error:', e);
+    return null;
+  }
 }
 
 async function updateBountyInRedis(bounty: any, redis: any): Promise<void> {
-  await redis.set(`bounty:${bounty.id}`, JSON.stringify(bounty));
+  try {
+    await redis.set(`bounty:${bounty.id}`, JSON.stringify(bounty));
+  } catch (e) {
+    console.error('[settle] updateBountyInRedis error:', e);
+    throw e;
+  }
 }
 
 async function updateAgentStats(agentFid: number, amountUsdc: number, redis: any): Promise<void> {
-  await redis.hincrby(`agent:stats:${agentFid}`, 'tasksCompleted', 1);
-  await redis.hincrbyfloat(`agent:stats:${agentFid}`, 'totalEarnedUsdc', amountUsdc);
+  try {
+    await redis.hincrby(`agent:stats:${agentFid}`, 'tasksCompleted', 1);
+    await redis.hincrbyfloat(`agent:stats:${agentFid}`, 'totalEarnedUsdc', amountUsdc);
+  } catch (e) {
+    console.error('[settle] updateAgentStats error:', e);
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -33,15 +47,18 @@ export async function POST(req: NextRequest) {
 
     const redis = await getRedis();
     if (!redis) {
+      console.error('[settle] Redis not configured');
       return NextResponse.json({ error: 'Redis not configured' }, { status: 500 });
     }
 
     const bounty = await getBountyFromRedis(bountyId, redis);
     if (!bounty) {
+      console.error('[settle] Bounty not found:', bountyId);
       return NextResponse.json({ error: 'Bounty not found' }, { status: 404 });
     }
 
     if (bounty.status !== 'assigned') {
+      console.error('[settle] Wrong status:', bounty.status);
       return NextResponse.json({ error: 'Bounty must be assigned before completing' }, { status: 400 });
     }
 
