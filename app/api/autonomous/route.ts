@@ -21,6 +21,48 @@ async function getGroq() {
   return new Groq({ apiKey: GROQ_API_KEY });
 }
 
+async function getOpenBounties(redis: any) {
+  try {
+    const bountyIds = await redis.smembers('bounty:all');
+    const bountyIdsArray = Array.isArray(bountyIds) ? bountyIds : [];
+    const bounties = [];
+    for (const key of bountyIdsArray) {
+      const data = await redis.get(`bounty:${key}`);
+      if (data) {
+        const bounty = typeof data === 'string' ? JSON.parse(data) : data;
+        if (bounty.status === 'open') {
+          bounties.push(bounty);
+        }
+      }
+    }
+    return bounties;
+  } catch (e) {
+    console.error('[auto-worker] getOpenBounties error:', e);
+    return [];
+  }
+}
+
+async function getAssignedBounties(redis: any) {
+  try {
+    const bountyIds = await redis.smembers('bounty:all');
+    const bountyIdsArray = Array.isArray(bountyIds) ? bountyIds : [];
+    const bounties = [];
+    for (const key of bountyIdsArray) {
+      const data = await redis.get(`bounty:${key}`);
+      if (data) {
+        const bounty = typeof data === 'string' ? JSON.parse(data) : data;
+        if (bounty.status === 'assigned') {
+          bounties.push(bounty);
+        }
+      }
+    }
+    return bounties;
+  } catch (e) {
+    console.error('[auto-worker] getAssignedBounties error:', e);
+    return [];
+  }
+}
+
 async function getBounties(redis: any) {
   try {
     const bountyIds = await redis.smembers('bounties:all');
@@ -272,8 +314,10 @@ export async function POST(req: NextRequest) {
       console.log('[auto-worker] Warning: No Groq configured, running in limited mode');
     }
 
-    const bounties = await getBounties(redis);
-    console.log(`[auto-worker] Found ${bounties.length} open bounties`, bounties.map(b => b.id));
+    const openBounties = await getOpenBounties(redis);
+    const assignedBounties = await getAssignedBounties(redis);
+    const allBounties = [...openBounties, ...assignedBounties];
+    console.log(`[auto-worker] Found ${openBounties.length} open, ${assignedBounties.length} assigned`);
 
     const results = {
       evaluated: 0,
@@ -284,7 +328,7 @@ export async function POST(req: NextRequest) {
       errors: 0,
     };
 
-    for (const bounty of bounties) {
+    for (const bounty of openBounties) {
       results.evaluated++;
 
       if (await alreadyBid(bounty.id, WORKER_FID)) {
@@ -306,7 +350,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const assignedBounties = bounties.filter(b => b.status === 'assigned');
     for (const bounty of assignedBounties) {
       if (bounty.workerFid === WORKER_FID) {
         results.executed++;
