@@ -25,14 +25,22 @@ const typeIcons: Record<string, string> = {
   summarize: '📝',
   'onchain-lookup': '⛓️',
   simple: '⚡',
-  custom: '⚙️',
+  custom: '🎯',
+};
+
+const typeColors: Record<string, string> = {
+  translate: 'bg-blue-500/20 text-blue-400',
+  summarize: 'bg-purple-500/20 text-purple-400',
+  'onchain-lookup': 'bg-yellow-500/20 text-yellow-400',
+  simple: 'bg-meat-potato/20 text-meat-potato',
+  custom: 'bg-meat-pink/20 text-meat-pink',
 };
 
 const statusColors: Record<string, { bg: string; text: string; label: string }> = {
   open: { bg: 'bg-green-500/20', text: 'text-green-400', label: 'Open' },
-  assigned: { bg: 'bg-meat-orange/20', text: 'text-meat-orange', label: 'Assigned' },
+  assigned: { bg: 'bg-meat-potato/20', text: 'text-meat-potato', label: 'Assigned' },
   completed: { bg: 'bg-blue-500/20', text: 'text-blue-400', label: 'Completed' },
-  settled: { bg: 'bg-meat-red/20', text: 'text-meat-red', label: 'Paid' },
+  settled: { bg: 'bg-meat-red/20', text: 'text-meat-pink', label: 'Paid' },
 };
 
 export default function MiniApp() {
@@ -104,7 +112,7 @@ export default function MiniApp() {
         const data = await res.json();
         setBountyCreated(data.bounty);
         
-        const castText = `BOUNTY | id: ${data.bounty.id} | task: ${data.bounty.task} | reward: ${data.bounty.reward} USDC | @ABB`;
+        const castText = `🔔 New Bounty: "${data.bounty.task}" - Reward: ${data.bounty.reward} USDC`;
         
         try {
           if (sdkRef.current) {
@@ -116,7 +124,7 @@ export default function MiniApp() {
               setPosted(true);
             }
           } else {
-            window.open(`https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}`, '_blank');
+            window.open(`https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embedUrl=${encodeURIComponent(`https://abb-five-umber.vercel.app/bounties/${data.bounty.id}`)}`, '_blank');
             setPosted(true);
           }
         } catch (e) {
@@ -146,7 +154,7 @@ export default function MiniApp() {
         <motion.div 
           animate={{ scale: [1, 1.2, 1] }}
           transition={{ duration: 1.5, repeat: Infinity }}
-          className="w-3 h-3 bg-meat-red rounded-full"
+          className="w-3 h-3 bg-meat-pink rounded-full"
         />
       </div>
     );
@@ -161,7 +169,7 @@ export default function MiniApp() {
       >
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-meat-red rounded-full animate-pulse" />
+            <div className="w-2 h-2 bg-meat-pink rounded-full animate-pulse" />
             <span className="text-sm font-bold tracking-wide uppercase text-white">ABB</span>
           </div>
           {user && (
@@ -197,8 +205,20 @@ export default function MiniApp() {
                   {loading ? (
                     <div className="space-y-3">
                       {[1,2,3].map(i => (
-                        <div key={i} className="bg-dark-card border border-dark-border rounded-sm h-20 animate-pulse" />
+                        <div key={i} className="bg-dark-card border border-dark-border rounded-sm h-24 animate-pulse" />
                       ))}
+                    </div>
+                  ) : bounties.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="text-4xl mb-4">🍽️</div>
+                      <div className="text-lg font-bold text-white mb-2">No Bounties Yet</div>
+                      <div className="text-sm text-dark-muted mb-6">Post your first bounty to get started</div>
+                      <button 
+                        onClick={() => setShowForm(true)}
+                        className="bg-gradient-meat text-black font-bold text-sm px-6 py-3 rounded-sm"
+                      >
+                        Post Bounty
+                      </button>
                     </div>
                   ) : (
                     <div className="space-y-3">
@@ -209,28 +229,33 @@ export default function MiniApp() {
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: i * 0.05 }}
                           onClick={() => viewBounty(bounty.id)}
-                          className="bg-dark-card border border-dark-border rounded-sm p-4 active:scale-[0.98] transition-transform cursor-pointer hover:border-meat-red/30"
+                          className="bg-dark-card border border-dark-border rounded-sm p-4 active:scale-[0.98] transition-transform cursor-pointer hover:border-meat-brown/30"
                         >
-                          <div className="flex items-start justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <span>{typeIcons[bounty.type] || '⚡'}</span>
-                              <span className="text-xs text-dark-muted truncate max-w-[120px]">{bounty.id}</span>
+                          <div className="flex items-start gap-3 mb-3">
+                            <div className={`w-10 h-10 rounded-sm flex items-center justify-center text-xl ${typeColors[bounty.type] || typeColors.simple}`}>
+                              {typeIcons[bounty.type] || '⚡'}
                             </div>
-                            <span className={`px-2 py-0.5 rounded-sm text-[10px] font-medium ${statusColors[bounty.status]?.bg || 'bg-white/10'} ${statusColors[bounty.status]?.text || 'text-dark-muted'}`}>
-                              {statusColors[bounty.status]?.label || bounty.status}
-                            </span>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-xs text-dark-muted">{bounty.id}</span>
+                                <span className={`px-2 py-0.5 rounded-sm text-[10px] font-medium ${statusColors[bounty.status]?.bg || 'bg-white/10'} ${statusColors[bounty.status]?.text || 'text-dark-muted'}`}>
+                                  {statusColors[bounty.status]?.label || bounty.status}
+                                </span>
+                              </div>
+                              <div className="text-sm text-dark-text line-clamp-2">{bounty.task}</div>
+                            </div>
                           </div>
-                          <div className="text-sm text-dark-text mb-3 line-clamp-2">{bounty.task}</div>
-                          <div className="flex items-center justify-between">
+                          <div className="flex items-center justify-between pl-13">
                             <div className="flex items-center gap-3">
-                              <span className="text-sm font-bold text-meat-orange">{bounty.reward} USDC</span>
+                              <span className="text-sm font-bold text-meat-potato">💰 {bounty.reward} USDC</span>
                               {bounty.status === 'assigned' && bounty.workerUsername && (
                                 <span className="text-xs text-dark-muted">→ @{bounty.workerUsername}</span>
                               )}
                             </div>
                             <button 
                               onClick={(e) => { e.stopPropagation(); handleBid(bounty.id); }}
-                              className="text-xs bg-dark-hover border border-dark-border px-3 py-1 rounded-sm hover:border-meat-red/50"
+                              disabled={bounty.status !== 'open'}
+                              className={`text-xs border border-dark-border px-3 py-1 rounded-sm ${bounty.status !== 'open' ? 'opacity-50 cursor-not-allowed' : 'hover:border-meat-brown/50'}`}
                             >
                               Bid
                             </button>
@@ -304,7 +329,7 @@ export default function MiniApp() {
               </motion.div>
               <div className="text-sm font-bold mb-1 text-white">Bounty Created!</div>
               <div className="text-xs text-dark-muted mb-4">{bountyCreated.task}</div>
-              <div className="text-lg font-black text-meat-orange mb-4">{bountyCreated.reward} USDC</div>
+              <div className="text-lg font-black text-meat-potato mb-4">💰 {bountyCreated.reward} USDC</div>
               
               {posted && (
                 <div className="text-xs text-green-400 mb-4">✓ Posted to Warpcast</div>

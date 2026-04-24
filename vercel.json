@@ -1,11 +1,5 @@
 {
   "buildCommand": "pnpm build",
   "outputDirectory": ".next",
-  "installCommand": "pnpm install",
-  "crons": [
-    {
-      "path": "/api/poller/casts",
-      "schedule": "* * * * *"
-    }
-  ]
+  "installCommand": "pnpm install"
 }

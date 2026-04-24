@@ -33,21 +33,29 @@ const typeIcons: Record<string, string> = {
   summarize: '📝',
   'onchain-lookup': '⛓️',
   simple: '⚡',
-  custom: '⚙️',
+  custom: '🎯',
 };
 
-const statusConfig: Record<string, { color: string; bg: string; label: string; step: number }> = {
-  open: { color: 'text-green-400', bg: 'bg-green-500/20', label: 'Open for Bids', step: 1 },
-  assigned: { color: 'text-meat-orange', bg: 'bg-meat-orange/20', label: 'Work in Progress', step: 2 },
-  completed: { color: 'text-blue-400', bg: 'bg-blue-500/20', label: 'Work Submitted', step: 3 },
-  settled: { color: 'text-meat-red', bg: 'bg-meat-red/20', label: 'Paid', step: 4 },
+const typeColors: Record<string, string> = {
+  translate: 'bg-blue-500/20 text-blue-400',
+  summarize: 'bg-purple-500/20 text-purple-400',
+  'onchain-lookup': 'bg-yellow-500/20 text-yellow-400',
+  simple: 'bg-meat-potato/20 text-meat-potato',
+  custom: 'bg-meat-pink/20 text-meat-pink',
+};
+
+const statusConfig: Record<string, { color: string; bg: string; label: string; step: number; icon: string }> = {
+  open: { color: 'text-green-400', bg: 'bg-green-500/20', label: 'Open for Bids', step: 1, icon: '📝' },
+  assigned: { color: 'text-meat-potato', bg: 'bg-meat-potato/20', label: 'Work in Progress', step: 2, icon: '⚡' },
+  completed: { color: 'text-blue-400', bg: 'bg-blue-500/20', label: 'Work Submitted', step: 3, icon: '📋' },
+  settled: { color: 'text-meat-pink', bg: 'bg-meat-pink/20', label: 'Paid', step: 4, icon: '💰' },
 };
 
 const workflowSteps = [
-  { step: 1, label: 'Open' },
-  { step: 2, label: 'Assigned' },
-  { step: 3, label: 'Completed' },
-  { step: 4, label: 'Paid' },
+  { step: 1, label: 'Open', icon: '📝' },
+  { step: 2, label: 'Assigned', icon: '⚡' },
+  { step: 3, label: 'Completed', icon: '📋' },
+  { step: 4, label: 'Paid', icon: '💰' },
 ];
 
 export default function BountyDetailPage() {
@@ -169,9 +177,9 @@ export default function BountyDetailPage() {
   };
 
   const handleShare = async () => {
-    const shareText = `BOUNTY | id: ${bounty?.id} | task: ${bounty?.task} | reward: ${bounty?.reward} USDC | @ABB`;
+    const shareText = `🔔 New Bounty: "${bounty?.task}" - Reward: ${bounty?.reward} USDC`;
     if (!bounty || !sdkRef.current) {
-      const url = `https://warpcast.com/~/compose?text=${encodeURIComponent(shareText + ` | https://abb-five-umber.vercel.app/bounties/${bounty?.id}`)}`;
+      const url = `https://warpcast.com/~/compose?text=${encodeURIComponent(shareText)}&embedUrl=${encodeURIComponent(`https://abb-five-umber.vercel.app/bounties/${bounty?.id}`)}`;
       window.open(url, '_blank');
       return;
     }
@@ -194,7 +202,7 @@ export default function BountyDetailPage() {
         <motion.div 
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="w-6 h-6 border-2 border-meat-red border-t-transparent rounded-full"
+          className="w-6 h-6 border-2 border-meat-pink border-t-transparent rounded-full"
         />
       </div>
     );
@@ -225,84 +233,63 @@ export default function BountyDetailPage() {
         </div>
 
         <div className="bg-dark-card border border-dark-border rounded-sm p-5 mb-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <span className="text-xl">{typeIcons[bounty.type] || '⚡'}</span>
-              <span className="text-xs text-dark-muted">{bounty.id}</span>
+          <div className="flex items-start gap-4 mb-4">
+            <div className={`w-12 h-12 rounded-sm flex items-center justify-center text-2xl ${typeColors[bounty.type] || typeColors.simple}`}>
+              {typeIcons[bounty.type] || '⚡'}
             </div>
-            <span className={`px-3 py-1 rounded-sm text-xs font-medium ${statusConfig[bounty.status]?.bg || 'bg-white/10'} ${statusConfig[bounty.status]?.color || 'text-dark-muted'}`}>
-              {statusConfig[bounty.status]?.label || bounty.status}
-            </span>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xs text-dark-muted">{bounty.id}</span>
+                <span className={`px-2 py-0.5 rounded-sm text-[10px] font-medium ${statusConfig[bounty.status]?.bg || 'bg-white/10'} ${statusConfig[bounty.status]?.color || 'text-dark-muted'}`}>
+                  {statusConfig[bounty.status]?.label || bounty.status}
+                </span>
+              </div>
+              <h1 className="text-lg font-bold leading-tight text-white">{bounty.task}</h1>
+            </div>
           </div>
           
-          <h1 className="text-lg font-bold mb-4 leading-tight text-white">{bounty.task}</h1>
-          
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between pt-4 border-t border-dark-border">
             <div>
-              <div className="text-2xl font-black text-meat-orange">{bounty.reward}</div>
+              <div className="text-2xl font-black text-meat-potato">💰 {bounty.reward}</div>
               <div className="text-xs text-dark-muted">USDC</div>
+            </div>
+            <div className="text-right">
+              <div className="text-xs text-dark-muted">Posted by</div>
+              <div className="text-sm text-white">@{bounty.posterUsername || 'anonymous'}</div>
             </div>
           </div>
         </div>
 
         <div className="bg-dark-card border border-dark-border rounded-sm p-4 mb-4">
-          <div className="text-xs text-dark-muted mb-3 uppercase tracking-widest">Progress</div>
+          <div className="text-xs text-dark-muted mb-3 uppercase tracking-widest">📊 Progress</div>
           <div className="flex items-center justify-between">
             {workflowSteps.map((s, i) => (
               <div key={s.step} className="flex items-center flex-1">
                 <div className="flex flex-col items-center">
-                  <div className={`w-8 h-8 rounded-sm flex items-center justify-center text-xs font-bold ${
+                  <div className={`w-10 h-10 rounded-sm flex items-center justify-center text-xl ${
                     statusConfig[bounty.status]?.step || 0 >= s.step 
                       ? 'bg-gradient-meat text-black' 
                       : 'bg-dark-hover text-dark-muted'
                   }`}>
-                    {s.step}
+                    {s.icon}
                   </div>
                   <span className={`text-[10px] mt-1 ${statusConfig[bounty.status]?.step || 0 >= s.step ? 'text-white' : 'text-dark-muted'}`}>
                     {s.label}
                   </span>
                 </div>
                 {i < workflowSteps.length - 1 && (
-                  <div className={`flex-1 h-0.5 mx-1 ${statusConfig[bounty.status]?.step || 0 > s.step ? 'bg-meat-red' : 'bg-dark-border'}`} />
+                  <div className={`flex-1 h-0.5 mx-1 ${statusConfig[bounty.status]?.step || 0 > s.step ? 'bg-meat-pink' : 'bg-dark-border'}`} />
                 )}
               </div>
             ))}
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 mb-6">
-          <div className="bg-dark-card border border-dark-border rounded-sm p-3">
-            <div className="text-xs text-dark-muted mb-1">Posted by</div>
-            <div className="text-sm text-white">@{bounty.posterUsername || 'anonymous'}</div>
-          </div>
-          <div className="bg-dark-card border border-dark-border rounded-sm p-3">
-            <div className="text-xs text-dark-muted mb-1">Due</div>
-            <div className="text-sm text-white">{new Date(bounty.deadlineTs * 1000).toLocaleDateString()}</div>
-          </div>
-        </div>
-
-        {bounty.workerUsername && (
-          <div className="bg-dark-card border border-dark-border rounded-sm p-4 mb-4">
-            <div className="text-xs text-dark-muted mb-2 uppercase tracking-widest">Worker</div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-sm bg-gradient-meat flex items-center justify-center text-black text-sm font-bold">
-                  {bounty.workerUsername[0].toUpperCase()}
-                </div>
-                <span className="text-sm font-bold text-white">@{bounty.workerUsername}</span>
-              </div>
-              {bounty.status === 'settled' && (
-                <span className="text-xs text-meat-red">✓ Paid {bounty.reward} USDC</span>
-              )}
-            </div>
-          </div>
-        )}
-
         <div className={`p-4 rounded-sm mb-4 ${statusConfig[bounty.status]?.bg || 'bg-dark-card'}`}>
           <div className="text-xs text-dark-muted mb-1">
-            {bounty.status === 'open' && 'Waiting for agents to bid...'}
+            {statusConfig[bounty.status]?.icon} {bounty.status === 'open' && 'Waiting for agents to bid...'}
             {bounty.status === 'assigned' && 'Work in progress...'}
-            {bounty.status === 'completed' && 'Work submitted, awaiting payment...'}
+            {bounty.status === 'completed' && 'Work submitted, awaiting completion...'}
             {bounty.status === 'settled' && 'Payment complete!'}
             {!statusConfig[bounty.status] && 'Unknown status'}
           </div>
@@ -311,24 +298,41 @@ export default function BountyDetailPage() {
           </div>
         </div>
 
+        {bounty.workerUsername && (
+          <div className="bg-dark-card border border-dark-border rounded-sm p-4 mb-4">
+            <div className="text-xs text-dark-muted mb-2 uppercase tracking-widest">👤 Worker</div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-meat flex items-center justify-center text-black font-bold">
+                  {bounty.workerUsername[0].toUpperCase()}
+                </div>
+                <span className="text-sm font-bold text-white">@{bounty.workerUsername}</span>
+              </div>
+              {bounty.status === 'settled' && (
+                <span className="text-sm text-meat-pink">✓ Paid 💰 {bounty.reward} USDC</span>
+              )}
+            </div>
+          </div>
+        )}
+
         <button 
           onClick={handleShare}
-          className="w-full bg-dark-card border border-dark-border text-white font-medium py-3 rounded-sm text-sm mb-4 hover:border-meat-red/50"
+          className="w-full bg-dark-card border border-dark-border text-white font-medium py-3 rounded-sm text-sm mb-4 hover:border-meat-brown/50 flex items-center justify-center gap-2"
         >
-          Share Bounty
+          📤 Share Bounty
         </button>
 
         {bounty.status === 'assigned' && user?.fid === bounty.workerFid && (
           <button 
             onClick={() => router.push(`/settle?bountyId=${bounty.id}`)}
-            className="w-full bg-gradient-meat text-black font-bold py-3 rounded-sm text-sm mb-4 glow-meat"
+            className="w-full bg-gradient-meat text-black font-bold py-3 rounded-sm text-sm mb-4 glow-warm flex items-center justify-center gap-2"
           >
-            Submit Work & Get Paid
+            💰 Submit Work & Get Paid
           </button>
         )}
 
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-bold uppercase tracking-wide text-white">Bids ({bids.length})</h2>
+          <h2 className="text-sm font-bold uppercase tracking-wide text-white">✋ Bids ({bids.length})</h2>
         </div>
 
         <AnimatePresence>
@@ -339,32 +343,32 @@ export default function BountyDetailPage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.1 }}
               className={`bg-dark-card border rounded-sm p-4 mb-3 ${
-                bid.status === 'accepted' ? 'border-meat-red/30' : 'border-dark-border'
+                bid.status === 'accepted' ? 'border-meat-brown/30' : 'border-dark-border'
               }`}
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-bold text-white">@{bid.agentUsername}</span>
                   {bid.status === 'accepted' && (
-                    <span className="text-[10px] bg-meat-red/20 text-meat-red px-2 py-0.5 rounded-sm">
-                      Selected
+                    <span className="text-[10px] bg-meat-pink/20 text-meat-pink px-2 py-0.5 rounded-sm">
+                      ✨ Selected
                     </span>
                   )}
                 </div>
-                <span className="text-sm font-black text-meat-orange">{bid.priceUsdc} USDC</span>
+                <span className="text-sm font-black text-meat-potato">💰 {bid.priceUsdc} USDC</span>
               </div>
               <p className="text-xs text-dark-muted mb-2">{bid.proposal}</p>
               {bounty.status === 'open' && user?.fid === bounty.posterFid && bid.status !== 'accepted' && (
                 <button 
                   onClick={() => handleAcceptBid(bid)}
                   disabled={submitting}
-                  className="text-xs text-meat-red hover:underline"
+                  className="text-xs text-meat-pink hover:underline"
                 >
                   Accept →
                 </button>
               )}
               {bid.status === 'accepted' && (
-                <span className="text-xs text-meat-red">✓ Accepted - Working on this</span>
+                <span className="text-xs text-meat-pink">✓ Accepted - Working on this</span>
               )}
             </motion.div>
           ))}
@@ -423,9 +427,9 @@ export default function BountyDetailPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 onClick={() => setShowBidForm(true)}
-                className="w-full border border-dark-border text-dark-muted py-3 rounded-sm text-sm hover:border-meat-red/50"
+                className="w-full border border-dark-border text-dark-muted py-3 rounded-sm text-sm hover:border-meat-brown/50"
               >
-                Place Bid
+                ✋ Place Bid
               </motion.button>
             )}
           </AnimatePresence>

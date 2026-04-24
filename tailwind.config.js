@@ -26,16 +26,23 @@ module.exports = {
           950: '#042f2e',
         },
         'meat': {
-          red: '#ff4d00',
-          'red-dark': '#cc3d00',
-          orange: '#ff6b00',
-          yellow: '#ffaa00',
+          cream: '#f5f5f5',
+          light: '#FFB6B6',
+          pink: '#FF6B6B',
+          red: '#E85D5D',
+          brown: '#8B4513',
+          'brown-dark': '#654321',
+          sauce: '#3D2314',
+          potato: '#D2691E',
+          green: '#228B22',
         },
         'dark': {
-          bg: '#050505',
-          card: '#0c0c0c',
-          border: '#1a1a1a',
-          hover: '#151515',
+          bg: '#1a1512',
+          card: '#2a221c',
+          border: '#3d3228',
+          hover: '#352d25',
+          text: '#f5f5f5',
+          muted: '#a89b8c',
         },
         'terminal': {
           bg: '#050505',
@@ -51,16 +58,11 @@ module.exports = {
       animation: {
         'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'glow': 'glow 2s ease-in-out infinite alternate',
-        'sizzle': 'sizzle 1.5s ease-in-out infinite',
       },
       keyframes: {
         glow: {
-          '0%': { boxShadow: '0 0 5px rgba(34, 211, 238, 0.2)' },
-          '100%': { boxShadow: '0 0 20px rgba(34, 211, 238, 0.6)' },
-        },
-        sizzle: {
-          '0%, 100%': { transform: 'scale(1)', opacity: 1 },
-          '50%': { transform: 'scale(1.02)', opacity: 0.9 },
+          '0%': { boxShadow: '0 0 5px rgba(232, 93, 93, 0.2)' },
+          '100%': { boxShadow: '0 0 20px rgba(232, 93, 93, 0.5)' },
         }
       },
       backgroundImage: {

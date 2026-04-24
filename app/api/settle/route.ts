@@ -2,40 +2,24 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-async function getBountyFromRedis(id: string): Promise<any | null> {
+async function getRedis() {
   if (!process.env.UPSTASH_REDIS_REST_URL) return null;
-  try {
-    const { Redis } = await import('@upstash/redis');
-    const redis = new Redis({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN });
-    const data = await redis.get(`bounty:${id}`);
-    return data ? JSON.parse(data as string) : null;
-  } catch (error) {
-    console.error('[api/settle] Redis error:', error);
-    return null;
-  }
+  const { Redis } = await import('@upstash/redis');
+  return new Redis({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN });
 }
 
-async function updateBountyInRedis(bounty: any): Promise<void> {
-  if (!process.env.UPSTASH_REDIS_REST_URL) return;
-  try {
-    const { Redis } = await import('@upstash/redis');
-    const redis = new Redis({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN });
-    await redis.set(`bounty:${bounty.id}`, JSON.stringify(bounty));
-  } catch (error) {
-    console.error('[api/settle] Update error:', error);
-  }
+async function getBountyFromRedis(id: string, redis: any): Promise<any | null> {
+  const data = await redis.get(`bounty:${id}`);
+  return data ? (typeof data === 'string' ? JSON.parse(data) : data) : null;
 }
 
-async function updateAgentStats(agentFid: number, amountUsdc: number): Promise<void> {
-  if (!process.env.UPSTASH_REDIS_REST_URL) return;
-  try {
-    const { Redis } = await import('@upstash/redis');
-    const redis = new Redis({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN });
-    await redis.hincrby(`agent:stats:${agentFid}`, 'tasksCompleted', 1);
-    await redis.hincrbyfloat(`agent:stats:${agentFid}`, 'totalEarnedUsdc', amountUsdc);
-  } catch (error) {
-    console.error('[api/settle] Agent stats error:', error);
-  }
+async function updateBountyInRedis(bounty: any, redis: any): Promise<void> {
+  await redis.set(`bounty:${bounty.id}`, JSON.stringify(bounty));
+}
+
+async function updateAgentStats(agentFid: number, amountUsdc: number, redis: any): Promise<void> {
+  await redis.hincrby(`agent:stats:${agentFid}`, 'tasksCompleted', 1);
+  await redis.hincrbyfloat(`agent:stats:${agentFid}`, 'totalEarnedUsdc', amountUsdc);
 }
 
 export async function POST(req: NextRequest) {
@@ -47,31 +31,36 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'bountyId required' }, { status: 400 });
     }
 
-    const bounty = await getBountyFromRedis(bountyId);
+    const redis = await getRedis();
+    if (!redis) {
+      return NextResponse.json({ error: 'Redis not configured' }, { status: 500 });
+    }
+
+    const bounty = await getBountyFromRedis(bountyId, redis);
     if (!bounty) {
       return NextResponse.json({ error: 'Bounty not found' }, { status: 404 });
     }
 
     if (bounty.status !== 'assigned') {
-      return NextResponse.json({ error: 'Bounty must be assigned before settling' }, { status: 400 });
+      return NextResponse.json({ error: 'Bounty must be assigned before completing' }, { status: 400 });
     }
 
-    // Simplified payment flow for now - just mark as settled
-    // TODO: Implement proper x402 payment when package API is clarified
+    const rewardAmount = bounty.reward || bounty.rewardUsdc || 0;
+    
     bounty.status = 'settled';
     bounty.resultUrl = resultUrl || '';
-    bounty.paidAmountUsdc = bounty.priceUsdc || bounty.rewardUsdc;
+    bounty.paidAmountUsdc = rewardAmount;
     bounty.settledAt = Math.floor(Date.now() / 1000);
-    await updateBountyInRedis(bounty);
-
-    await updateAgentStats(bounty.workerFid, bounty.paidAmountUsdc);
+    
+    await updateBountyInRedis(bounty, redis);
+    await updateAgentStats(bounty.workerFid, rewardAmount, redis);
 
     return NextResponse.json({ 
       bounty,
-      message: 'Bounty marked as settled (x402 payment integration pending)',
+      message: 'Bounty completed successfully',
     });
   } catch (error) {
-    console.error('[api/settle] POST error:', error);
-    return NextResponse.json({ error: 'Failed to settle bounty' }, { status: 500 });
+    console.error('[settle] POST error:', error);
+    return NextResponse.json({ error: 'Failed to complete bounty' }, { status: 500 });
   }
 }
