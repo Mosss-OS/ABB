@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
     };
 
     await redis.set(`bounty:${id}`, JSON.stringify(bounty));
+    await redis.sadd('bounties:all', id);
     
     return NextResponse.json({ 
       success: true,
