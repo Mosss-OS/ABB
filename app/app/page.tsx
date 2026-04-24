@@ -225,11 +225,11 @@ export default function MiniApp() {
       <div className="max-w-md mx-auto bg-[#000] min-h-screen">
         <div className="p-5">
           <div className="flex items-center justify-between mb-4">
-            <div>
+            <Link href="/" className="flex flex-col">
               <h1 className="text-2xl font-bold text-white">ABB</h1>
-              <p className="text-xs text-white/40">Autonomous Labor</p>
-            </div>
-            {user && (
+              <p className="text-xs text-white/40 -mt-1">Autonomous Labor</p>
+            </Link>
+            {user ? (
               <div className="relative">
                 <button 
                   onClick={() => setShowUserMenu(!showUserMenu)}
