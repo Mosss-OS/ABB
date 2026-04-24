@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { FiDollarSign, FiCheck, FiArrowLeft, FiLink } from 'react-icons/fi';
 
 interface Bounty {
   id: string;
@@ -59,6 +61,7 @@ export default function SettleBounty() {
       
       if (!res.ok) {
         setError(data.error || 'Failed to settle');
+        setSettling(false);
         return;
       }
       
@@ -70,93 +73,116 @@ export default function SettleBounty() {
     setSettling(false);
   };
 
-  if (done) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-dark-bg p-4 max-w-md mx-auto">
-        <div className="text-center py-12">
-          <div className="w-16 h-16 bg-gradient-meat rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-2xl text-black">✓</span>
-          </div>
-          <div className="text-lg font-black text-white mb-2">Bounty Completed!</div>
-          <div className="text-sm text-dark-muted mb-6">The task has been marked as complete.</div>
-          <Link href="/app" className="inline-block mt-6 bg-dark-card border border-dark-border text-white px-4 py-2 rounded-sm text-sm hover:border-meat-brown/50">
-            Back to Bounties
-          </Link>
-        </div>
+      <div className="min-h-screen bg-[#000] flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
       </div>
     );
   }
 
-  if (loading) {
+  if (done) {
     return (
-      <div className="min-h-screen bg-dark-bg p-4 max-w-md mx-auto flex items-center justify-center">
-        <div className="text-dark-muted">Loading...</div>
+      <div className="min-h-screen bg-[#000] flex items-center justify-center p-5">
+        <motion.div 
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="bg-[#1C1C1E] rounded-3xl p-8 text-center max-w-sm w-full"
+        >
+          <motion.div 
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', delay: 0.2 }}
+            className="w-16 h-16 bg-[#34C759] rounded-full flex items-center justify-center mx-auto mb-4"
+          >
+            <FiCheck size={28} className="text-black" />
+          </motion.div>
+          <div className="text-lg font-semibold text-white mb-2">Work Complete!</div>
+          <div className="text-sm text-white/60 mb-4">Task marked as done</div>
+          <Link 
+            href="/app" 
+            className="block w-full bg-[#3A3A3C] text-white font-medium py-3 rounded-2xl text-sm"
+          >
+            Back to App
+          </Link>
+        </motion.div>
       </div>
     );
   }
 
   if (!bounty) {
     return (
-      <div className="min-h-screen bg-dark-bg p-4 max-w-md mx-auto flex items-center justify-center">
-        <div className="text-dark-muted">Bounty not found</div>
+      <div className="min-h-screen bg-[#000] flex items-center justify-center">
+        <div className="text-white/60">Bounty not found</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-dark-bg p-4 max-w-md mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <Link href="/app" className="text-sm text-dark-muted hover:text-white">← Back</Link>
-        <span className="font-bold text-sm text-white uppercase tracking-wide">✓ Complete</span>
-        <div className="w-12" />
-      </div>
+    <div className="min-h-screen bg-[#000]">
+      <div className="max-w-md mx-auto p-5">
+        <div className="flex items-center justify-between mb-6">
+          <Link href={`/bounties/${bountyId}`} className="flex items-center gap-2 text-white/60">
+            <FiArrowLeft size={20} />
+            <span className="text-sm">Back</span>
+          </Link>
+          <span className="text-sm font-semibold text-white">Complete Work</span>
+          <div className="w-12" />
+        </div>
 
-      <div className="bg-dark-card border border-dark-border rounded-sm p-4 mb-4">
-        <div className="text-[10px] text-dark-muted mb-1">{bounty.id}</div>
-        <div className="text-sm font-medium text-white">{bounty.task}</div>
-      </div>
+        <div className="bg-[#2C2C2E] rounded-3xl p-5 mb-4">
+          <div className="text-xs text-white/40 mb-2 font-medium">TASK</div>
+          <div className="text-base font-medium">{bounty.task}</div>
+        </div>
 
-      <div className="bg-dark-card border border-dark-border rounded-sm p-4 mb-4">
-        <div className="text-xs text-dark-muted mb-2 uppercase tracking-widest">👤 Worker</div>
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-sm bg-gradient-meat flex items-center justify-center text-black text-sm font-bold">
-            {bounty.workerUsername[0].toUpperCase()}
+        <div className="bg-[#2C2C2E] rounded-3xl p-5 mb-4">
+          <div className="text-xs text-white/40 mb-3 font-medium">WORKER</div>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#FF9500] to-[#FF3B30] flex items-center justify-center text-black font-semibold text-lg">
+              {bounty.workerUsername[0].toUpperCase()}
+            </div>
+            <span className="font-semibold text-white">@{bounty.workerUsername}</span>
           </div>
-          <span className="font-bold text-white">@{bounty.workerUsername}</span>
         </div>
+
+        <div className="bg-gradient-to-r from-[#34C759]/20 to-[#34C759]/5 rounded-3xl p-5 mb-4">
+          <div className="text-xs text-[#34C759] mb-2 font-medium">REWARD</div>
+          <div className="text-3xl font-bold text-[#34C759]">
+            <FiDollarSign className="inline" size={24} />{bounty.reward}
+            <span className="text-sm font-normal text-white/40 ml-1">USDC</span>
+          </div>
+        </div>
+
+        {error && (
+          <div className="bg-[#FF3B30]/15 text-[#FF3B30] text-sm p-4 rounded-2xl mb-4">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSettle} className="space-y-4">
+          <div>
+            <label className="text-xs text-white/40 mb-2 block">Result Link (optional)</label>
+            <div className="relative">
+              <FiLink className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={16} />
+              <input
+                type="url"
+                value={resultUrl}
+                onChange={(e) => setResultUrl(e.target.value)}
+                placeholder="https://..."
+                className="w-full pl-10 pr-4 py-4 bg-[#2C2C2E] rounded-2xl text-sm text-white placeholder-white/30"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={settling}
+            className="w-full bg-gradient-to-r from-[#FF9500] to-[#FF3B30] text-black font-semibold py-4 rounded-2xl disabled:opacity-50"
+          >
+            {settling ? 'Completing...' : 'Complete Work'}
+          </button>
+        </form>
       </div>
-
-      <div className="bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/30 rounded-sm p-4 mb-4">
-        <div className="text-xs text-green-400 mb-1 uppercase tracking-widest">✓ Reward Amount</div>
-        <div className="text-3xl font-black text-green-400">{bounty.reward} USDC</div>
-      </div>
-
-      {error && (
-        <div className="bg-meat-pink/10 text-meat-pink text-sm p-3 rounded-sm mb-4">
-          {error}
-        </div>
-      )}
-
-      <form onSubmit={handleSettle} className="space-y-4">
-        <div>
-          <label className="block text-xs font-medium mb-2 text-dark-muted">Result URL (optional)</label>
-          <input
-            type="url"
-            value={resultUrl}
-            onChange={(e) => setResultUrl(e.target.value)}
-            placeholder="Link to completed work..."
-            className="w-full p-3 bg-dark-card border border-dark-border rounded-sm text-sm text-white placeholder-dark-muted focus:outline-none focus:border-meat-brown/50"
-          />
-        </div>
-
-        <button
-          type="submit"
-          disabled={settling}
-          className="w-full bg-gradient-meat text-black py-3 rounded-sm font-bold disabled:opacity-50 glow-warm"
-        >
-          {settling ? 'Completing...' : 'Mark as Complete'}
-        </button>
-      </form>
     </div>
   );
 }
