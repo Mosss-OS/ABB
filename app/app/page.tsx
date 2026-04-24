@@ -6,8 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
   FiGlobe, FiFileText, FiLink, FiZap, FiTarget,
-  FiDollarSign, FiCheck, FiPlus, FiCpu, FiArrowRight,
-  FiSearch, FiX, FiLogOut
+  FiDollarSign, FiCheck, FiPlus, FiCpu, FiArrowRight
 } from 'react-icons/fi';
 
 interface User {
@@ -49,8 +48,6 @@ const statusConfig: Record<string, { bg: string; color: string; label: string }>
   settled: { bg: 'bg-[#AF52DE]/15', color: 'text-[#AF52DE]', label: 'Paid' },
 };
 
-type FilterTab = 'all' | 'open' | 'assigned' | 'settled';
-
 export default function MiniApp() {
   const [user, setUser] = useState<User | null>(null);
   const [bounties, setBounties] = useState<Bounty[]>([]);
@@ -63,9 +60,6 @@ export default function MiniApp() {
   const [posted, setPosted] = useState(false);
   const [agentRunning, setAgentRunning] = useState(false);
   const [agentResult, setAgentResult] = useState<any>(null);
-  const [filter, setFilter] = useState<FilterTab>('all');
-  const [search, setSearch] = useState('');
-  const [showUserMenu, setShowUserMenu] = useState(false);
   const router = useRouter();
   const sdkRef = useRef<any>(null);
 
@@ -171,18 +165,6 @@ export default function MiniApp() {
     router.push(`/bounties/${bountyId}`);
   };
 
-  const handleLogout = async () => {
-    setUser(null);
-    setShowUserMenu(false);
-    router.push('/');
-  };
-
-  const filteredBounties = bounties.filter(b => {
-    const matchesFilter = filter === 'all' || b.status === filter;
-    const matchesSearch = !search || b.task.toLowerCase().includes(search.toLowerCase());
-    return matchesFilter && matchesSearch;
-  });
-
   if (bountyCreated) {
     return (
       <div className="min-h-screen bg-[#000] flex items-center justify-center p-5">
@@ -224,40 +206,16 @@ export default function MiniApp() {
     <div className="min-h-screen bg-[#000]">
       <div className="max-w-md mx-auto bg-[#000] min-h-screen">
         <div className="p-5">
-          <div className="flex items-center justify-between mb-4">
-            <Link href="/" className="flex flex-col">
+          <div className="flex items-center justify-between mb-6">
+            <div>
               <h1 className="text-2xl font-bold text-white">ABB</h1>
-              <p className="text-xs text-white/40 -mt-1">Autonomous Labor</p>
-            </Link>
-            {user ? (
-              <div className="relative">
-                <button 
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="w-9 h-9 rounded-full bg-gradient-to-r from-[#FF9500] to-[#FF3B30] flex items-center justify-center text-black text-xs font-semibold"
-                >
+              <p className="text-xs text-white/40">Autonomous Labor</p>
+            </div>
+            {user && (
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#FF9500] to-[#FF3B30] flex items-center justify-center text-black text-xs font-semibold">
                   {user.username[0].toUpperCase()}
-                </button>
-                <AnimatePresence>
-                  {showUserMenu && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="absolute right-0 top-12 bg-[#1C1C1E] rounded-2xl py-2 w-40 z-50 border border-white/10"
-                    >
-                      <div className="px-4 py-2 text-xs text-white/40 border-b border-white/10">
-                        @{user.username}
-                      </div>
-                      <button 
-                        onClick={handleLogout}
-                        className="w-full px-4 py-2 text-left text-sm text-[#FF3B30] flex items-center gap-2"
-                      >
-                        <FiLogOut size={14} />
-                        Disconnect
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                </div>
               </div>
             )}
           </div>
@@ -269,7 +227,8 @@ export default function MiniApp() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
-                <div className="flex items-center gap-2 mb-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-sm font-semibold text-white/80">Active Bounties</h2>
                   <button 
                     onClick={handleRunAgent}
                     disabled={agentRunning}
@@ -291,38 +250,6 @@ export default function MiniApp() {
                   </div>
                 )}
 
-                <div className="bg-[#1C1C1E] rounded-2xl p-2 mb-4 flex items-center gap-2">
-                  <FiSearch size={16} className="text-white/30 ml-2" />
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search bounties..."
-                    className="flex-1 bg-transparent text-sm text-white placeholder-white/30 py-2 outline-none"
-                  />
-                  {search && (
-                    <button onClick={() => setSearch('')} className="pr-2">
-                      <FiX size={14} className="text-white/30" />
-                    </button>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
-                  {(['all', 'open', 'assigned', 'settled'] as FilterTab[]).map((tab) => (
-                    <button
-                      key={tab}
-                      onClick={() => setFilter(tab)}
-                      className={`px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
-                        filter === tab 
-                          ? 'bg-white text-black' 
-                          : 'bg-[#2C2C2E] text-white/60'
-                      }`}
-                    >
-                      {tab === 'all' ? 'All' : statusConfig[tab]?.label || tab}
-                    </button>
-                  ))}
-                </div>
-
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold text-white">Bounties</h2>
                   <button 
@@ -339,18 +266,14 @@ export default function MiniApp() {
                       <div key={i} className="bg-[#1C1C1E] rounded-2xl h-24 animate-pulse" />
                     ))}
                   </div>
-                ) : filteredBounties.length === 0 ? (
+                ) : bounties.length === 0 ? (
                   <div className="bg-[#1C1C1E] rounded-2xl p-8 text-center">
-                    <div className="text-white/40 text-sm">
-                      {search ? 'No matches found' : 'No bounties yet'}
-                    </div>
-                    <div className="text-white/20 text-xs mt-1">
-                      {search ? 'Try a different search' : 'Create one to get started'}
-                    </div>
+                    <div className="text-white/40 text-sm">No bounties yet</div>
+                    <div className="text-white/20 text-xs mt-1">Create one to get started</div>
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {filteredBounties.map((bounty) => (
+                    {bounties.map((bounty) => (
                       <motion.div 
                         key={bounty.id}
                         initial={{ opacity: 0, y: 10 }}
