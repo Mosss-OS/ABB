@@ -239,19 +239,18 @@ export default function MiniApp() {
               <h1 className="text-2xl font-bold text-white">ABB</h1>
               <p className="text-xs text-white/40">Autonomous Labor</p>
             </div>
-            {user && (
-              <div className="relative" style={{ zIndex: 100 }}>
-                <button
-                  onClick={() => setShowAccountMenu(!showAccountMenu)}
-                  className="flex items-center gap-2 cursor-pointer"
-                >
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#FF9500] to-[#FF3B30] flex items-center justify-center text-black text-xs font-semibold cursor-pointer">
-                    {user.username[0].toUpperCase()}
-                  </div>
-                </button>
-                
-                {showAccountMenu && (
-                  <motion.div
+            <div className="relative" style={{ zIndex: 100 }}>
+              <button
+                onClick={() => setShowAccountMenu(!showAccountMenu)}
+                className="flex items-center gap-2 cursor-pointer p-1"
+              >
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#FF9500] to-[#FF3B30] flex items-center justify-center text-black text-xs font-semibold">
+                  {user?.username?.[0]?.toUpperCase() || '?'}
+                </div>
+              </button>
+              
+              {showAccountMenu && user && (
+                <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="absolute top-12 right-0 bg-[#2C2C2E] rounded-2xl p-4 w-48 shadow-xl"
@@ -288,8 +287,7 @@ export default function MiniApp() {
                   </motion.div>
                 )}
               </div>
-            )}
-          </div>
+            </div>
 
           <AnimatePresence mode="wait">
             {!showForm ? (
