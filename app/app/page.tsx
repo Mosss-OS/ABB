@@ -68,6 +68,8 @@ export default function MiniApp() {
   const router = useRouter();
   const sdkRef = useRef<any>(null);
 
+  const { login, logout, user: privyUser, ready } = { login: () => {}, logout: () => {}, user: null, ready: true };
+
   const handleRunAgent = async () => {
     setAgentRunning(true);
     setAgentResult(null);
@@ -93,6 +95,14 @@ export default function MiniApp() {
       setLoading(false);
     }
   }
+
+  const handlePrivyLogin = async () => {
+    try {
+      await login();
+    } catch (e) {
+      console.error('Privy login error:', e);
+    }
+  };
 
   const initPrivyWallet = async (fid: number, username: string) => {
     setWalletLoading(true);
@@ -139,7 +149,8 @@ export default function MiniApp() {
   const handleDisconnect = () => {
     setShowAccountMenu(false);
     setUser(null);
-    router.push('/');
+    setFundingAddress('');
+    logout();
   };
 
   const handleCreateBounty = async (e: React.FormEvent) => {
@@ -219,7 +230,7 @@ export default function MiniApp() {
             <FiCpu size={36} className="text-black" />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">ABB</h1>
-          <p className="text-white/60 mb-8">Autonomous Labor Market</p>
+          <p className="text-white/60 mb-8">Agent Bounty Board</p>
           
           <button 
             onClick={() => setShowSplash(false)}
@@ -287,7 +298,7 @@ export default function MiniApp() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl font-bold text-white">ABB</h1>
-              <p className="text-xs text-white/40">Autonomous Labor</p>
+              <p className="text-xs text-white/40">Agent Bounty Board</p>
             </div>
             <div className="flex items-center gap-3">
               <a 
