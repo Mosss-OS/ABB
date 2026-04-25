@@ -12,8 +12,9 @@ const MAX_TASK_COMPLEXITY = 'medium'; // 'simple', 'medium', 'complex'
 
 const TASK_TYPES_CAN_DO = [
   'translate', 'translation', 'summarize', 'summarization', 'general',
-  'research', 'writing', 'analysis', 'math', 'code', 'debug',
-  'explain', 'describe', 'create', 'generate', 'onchain-lookup'
+  'research', 'writing', 'analysis', 'math', 'calculate', 'code', 'debug',
+  'explain', 'describe', 'create', 'generate', 'onchain-lookup',
+  'what is', 'how many', 'what\'s', 'reply', 'say', 'hello'
 ];
 
 const TASK_TYPES_CANT_DO = [
@@ -76,8 +77,12 @@ function checkTaskCapabilities(bounty: any): { canDo: boolean; reason: string } 
     }
   }
   
-  if (!canDoType && TASK_TYPES_CAN_DO.length > 0) {
-    return { canDo: false, reason: 'Task type not in my capabilities' };
+  if (!canDoType) {
+    const isSimpleTask = taskLower.length < 100;
+    if (isSimpleTask) {
+      return { canDo: true, reason: 'Simple task within AI capabilities' };
+    }
+    return { canDo: false, reason: 'Task type not recognized' };
   }
   
   if (bounty.reward < MIN_REWARD_THRESHOLD) {
