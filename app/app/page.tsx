@@ -64,6 +64,7 @@ export default function MiniApp() {
   const [copyingAddress, setCopyingAddress] = useState(false);
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
+  const [walletLoading, setWalletLoading] = useState(false);
   const router = useRouter();
   const sdkRef = useRef<any>(null);
 
@@ -93,6 +94,25 @@ export default function MiniApp() {
     }
   }
 
+  const initPrivyWallet = async (fid: number, username: string) => {
+    setWalletLoading(true);
+    try {
+      const res = await fetch('/api/auth/privy-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fid, username }),
+      });
+      const data = await res.json();
+      if (data.address) {
+        setFundingAddress(data.address);
+        setUserBalance(data.balance || 0);
+      }
+    } catch (e) {
+      console.error('Failed to init Privy wallet:', e);
+    }
+    setWalletLoading(false);
+  };
+
   useEffect(() => {
     async function initSDK() {
       try {
@@ -113,20 +133,7 @@ export default function MiniApp() {
 
   useEffect(() => {
     if (!user?.fid) return;
-    const currentFid = user.fid;
-    async function fetchWalletInfo() {
-      try {
-        const res = await fetch(`/api/wallet?fid=${currentFid}`);
-        const data = await res.json();
-        if (data.address) {
-          setFundingAddress(data.address);
-          setUserBalance(data.balance || 0);
-        }
-      } catch (e) {
-        console.error('Failed to fetch wallet info:', e);
-      }
-    }
-    fetchWalletInfo();
+    initPrivyWallet(user.fid, user.username);
   }, [user?.fid]);
 
   const handleDisconnect = () => {
@@ -241,9 +248,16 @@ export default function MiniApp() {
     <div className="min-h-screen bg-[#000]">
       <div className="max-w-md mx-auto bg-[#000] min-h-screen">
         <div className="p-5">
-          {user && fundingAddress && (
+          {user && (walletLoading ? (
             <div className="mb-4 bg-[#1C1C1E] rounded-xl p-3">
-              <div className="text-[10px] text-white/40 mb-1">Your Wallet (Base Sepolia)</div>
+              <div className="text-xs text-white/60">Loading Privy Wallet...</div>
+            </div>
+          ) : fundingAddress && (
+            <div className="mb-4 bg-[#1C1C1E] rounded-xl p-3">
+              <div className="flex items-center justify-between mb-1">
+                <div className="text-[10px] text-[#34C759]">Privy Wallet</div>
+                <div className="text-[10px] bg-[#34C759]/20 text-[#34C759] px-2 py-0.5 rounded">Active</div>
+              </div>
               <button
                 onClick={async () => {
                   await navigator.clipboard.writeText(fundingAddress);
@@ -269,7 +283,7 @@ export default function MiniApp() {
                 </a>
               </div>
             </div>
-          )}
+          ))}
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl font-bold text-white">ABB</h1>
@@ -301,25 +315,23 @@ export default function MiniApp() {
                     style={{ zIndex: 9999 }}
                   >
                     <div className="text-xs text-white/60 mb-2">{user.username}</div>
-                    <div className="text-[10px] text-white/40 mb-1">Deposit Address</div>
-                    {fundingAddress ? (
+                    <div className="text-[10px] text-[#34C759] mb-3 flex items-center gap-1">
+                      <div className="w-2 h-2 rounded-full bg-[#34C759]"></div>
+                      Privy Wallet Connected
+                    </div>
+                    {fundingAddress && (
                       <button
                         onClick={async () => {
                           await navigator.clipboard.writeText(fundingAddress);
                           setCopyingAddress(true);
                           setTimeout(() => setCopyingAddress(false), 2000);
                         }}
-                        className="w-full text-left text-xs text-[#FF9500] hover:text-[#FF3B30] transition-colors flex items-center gap-1 mb-2 break-all"
+                        className="w-full text-left text-xs text-white/80 hover:text-[#FF9500] transition-colors flex items-center gap-2 mb-2"
                       >
-                        <FiCopy size={10} />
-                        {copyingAddress ? 'Copied!' : fundingAddress.slice(0, 6) + '...' + fundingAddress.slice(-4)}
+                        <FiCopy size={12} />
+                        {copyingAddress ? 'Copied!' : 'Copy Wallet Address'}
                       </button>
-                    ) : (
-                      <div className="text-xs text-white/30 mb-2">Loading...</div>
                     )}
-                    <div className="text-xs text-[#34C759] mb-3">
-                      <FiDollarSign className="inline" size={10} />{userBalance.toFixed(2)} USDC
-                    </div>
                     <div className="border-t border-white/10 pt-2 mt-2">
                       <button
                         onClick={handleDisconnect}
@@ -393,7 +405,7 @@ export default function MiniApp() {
                         key={bounty.id}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-[#1C1C1E] rounded-2xl p-4 active:scale-[0.98] transition-transform cursor-pointer"
+                        className="bg-[#1C1C1E] rounded-2xl p-4"
                       >
                         <div className="flex items-start gap-3">
                           <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${typeGradient[bounty.type] || typeGradient.simple} flex items-center justify-center text-white`}>
