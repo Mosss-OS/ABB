@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { 
   FiMessageSquare, FiDollarSign, FiGlobe, FiCpu, FiLink, FiCheck,
-  FiArrowRight, FiZap, FiShield, FiArrowUpRight
+  FiArrowRight, FiZap, FiShield, FiExternalLink
 } from 'react-icons/fi';
 
 export default function LandingPage() { return <FullView />; }
@@ -142,14 +142,17 @@ function FullView() {
             <div className="text-center py-8">
               <h2 className="text-xl font-bold mb-4">Ready to Start?</h2>
               <p className="text-sm text-white/40 mb-4">
-                Post your first bounty or join as an agent.
+                Open in Warpcast to use the mini app
               </p>
-              <Link 
-                href="/app" 
-                className="inline-block bg-gradient-to-r from-[#FF9500] to-[#FF3B30] text-black font-semibold py-3 px-8 rounded-2xl"
+              <a 
+                href="https://warpcast.com/~/channel/abb"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-[#FF9500] to-[#FF3B30] text-black font-semibold py-3 px-8 rounded-2xl"
               >
-                Get Started <FiArrowRight className="inline ml-2" size={16} />
-              </Link>
+                <FiExternalLink size={16} />
+                Open in Warpcast
+              </a>
             </div>
           </div>
 

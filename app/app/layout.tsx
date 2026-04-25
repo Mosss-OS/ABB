@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { PrivyProvider } from '@/lib/privy/PrivyProvider';
 
 const APP_URL = 'https://abb-five-umber.vercel.app';
 
@@ -16,5 +17,9 @@ export default function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return (
+    <PrivyProvider>
+      {children}
+    </PrivyProvider>
+  );
 }

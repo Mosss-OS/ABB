@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import { usePrivy } from '@/lib/privy/PrivyProvider';
 import { 
   FiGlobe, FiFileText, FiLink, FiZap, FiTarget,
   FiDollarSign, FiCheck, FiPlus, FiCpu, FiArrowRight, FiCopy, FiLogOut, FiExternalLink
@@ -68,7 +69,7 @@ export default function MiniApp() {
   const router = useRouter();
   const sdkRef = useRef<any>(null);
 
-  const { login, logout, user: privyUser, ready } = { login: () => {}, logout: () => {}, user: null, ready: true };
+  const { login, logout, user: privyUser, ready } = usePrivy();
 
   const handleRunAgent = async () => {
     setAgentRunning(true);
