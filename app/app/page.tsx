@@ -66,6 +66,13 @@ export default function MiniApp() {
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
   const [walletLoading, setWalletLoading] = useState(false);
+  const [agentActivity, setAgentActivity] = useState<{
+    stage: 'idle' | 'evaluating' | 'bidding' | 'working' | 'settling' | 'complete';
+    message: string;
+    bountyId?: string;
+    worker?: string;
+    amount?: number;
+  } | null>(null);
   const router = useRouter();
   const sdkRef = useRef<any>(null);
 
@@ -73,14 +80,26 @@ export default function MiniApp() {
 
   const handleRunAgent = async () => {
     setAgentRunning(true);
+    setAgentActivity({ stage: 'evaluating', message: 'Agent starting...' });
     setAgentResult(null);
     try {
       const res = await fetch('/api/autonomous', { method: 'POST' });
       const data = await res.json();
       setAgentResult(data);
+      
+      const stage = data.results?.stage || 'complete';
+      setAgentActivity({
+        stage,
+        message: data.results?.evaluated > 0 
+          ? `Evaluated ${data.results.evaluated}, placed ${data.results.bid} bid(s)` 
+          : 'No bounties to evaluate',
+        bountyId: data.results?.lastBountyId,
+        worker: data.results?.lastWorker,
+        amount: data.results?.lastAmount
+      });
       fetchBounties();
     } catch (e) {
-      setAgentResult({ error: 'Failed to run agent' });
+      setAgentActivity({ stage: 'idle', message: 'Agent error', bountyId: '', worker: '', amount: 0 });
     }
     setAgentRunning(false);
   };
@@ -385,6 +404,62 @@ export default function MiniApp() {
                       Evaluated: {agentResult.results?.evaluated || 0} · 
                       Bid: {agentResult.results?.bid || 0} ·
                       Skipped: {agentResult.results?.skippedAlreadyBid || 0}
+                    </div>
+                  </div>
+                )}
+
+                {agentActivity && (
+                  <div className="mb-4 bg-[#1C1C1E] rounded-2xl p-4">
+                    <div className="text-[10px] text-white/40 mb-3">Live Agent Activity</div>
+                    <div className="space-y-2">
+                      {[
+                        { stage: 'evaluating', label: 'Evaluating Bounties', icon: '🔍' },
+                        { stage: 'bidding', label: 'Placing Bids', icon: '✋' },
+                        { stage: 'working', label: 'Working on Task', icon: '⚙️' },
+                        { stage: 'settling', label: 'Settling Payment', icon: '💰' },
+                      ].map((step) => {
+                        const isActive = agentActivity.stage === step.stage;
+                        const isComplete = ['complete', 'settling', 'working', 'bidding', 'evaluating'].indexOf(agentActivity.stage) > 
+                          ['evaluating', 'bidding', 'working', 'settling', 'complete'].indexOf(step.stage);
+                        return (
+                          <div 
+                            key={step.stage}
+                            className={`flex items-center gap-3 p-2 rounded-xl transition-all ${
+                              isActive ? 'bg-[#FF9500]/20 border border-[#FF9500]/50' : 
+                              isComplete ? 'bg-[#34C759]/10' : 'bg-[#2C2C2E]'
+                            }`}
+                          >
+                            <span className="text-base">{step.icon}</span>
+                            <div className="flex-1">
+                              <div className={`text-xs font-medium ${
+                                isActive ? 'text-[#FF9500]' : 
+                                isComplete ? 'text-[#34C759]' : 'text-white/40'
+                              }`}>
+                                {step.label}
+                              </div>
+                              {isActive && (
+                                <div className="text-[10px] text-white/60 mt-1">{agentActivity.message}</div>
+                              )}
+                              {step.stage === 'settling' && agentActivity.stage === 'settling' && agentActivity.amount && (
+                                <div className="text-[10px] text-[#34C759] mt-1">
+                                  +${agentActivity.amount} USDC → {agentActivity.worker}
+                                </div>
+                              )}
+                              {step.stage === 'complete' && agentActivity.stage === 'complete' && (
+                                <div className="text-[10px] text-[#34C759] mt-1">
+                                  ✓ Completed
+                                </div>
+                              )}
+                            </div>
+                            {isActive && (
+                              <div className="w-2 h-2 rounded-full bg-[#FF9500] animate-pulse" />
+                            )}
+                            {isComplete && agentActivity.stage !== step.stage && (
+                              <span className="text-[#34C759]">✓</span>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}

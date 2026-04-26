@@ -297,16 +297,34 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const results = {
+    const results: {
+      stage: string;
+      evaluated: number;
+      bid: number;
+      skippedAlreadyBid: number;
+      executed: number;
+      settled: number;
+      errors: number;
+      lastBountyId: string;
+      lastWorker: string;
+      lastAmount: number;
+    } = {
+      stage: 'complete',
       evaluated: 0,
       bid: 0,
       skippedAlreadyBid: 0,
       executed: 0,
       settled: 0,
       errors: 0,
+      lastBountyId: '',
+      lastWorker: '',
+      lastAmount: 0,
     };
 
+    let currentStage = 'evaluating';
+
     for (const bounty of openBounties) {
+      currentStage = 'evaluating';
       results.evaluated++;
       console.log(`[auto-worker] Evaluating: ${bounty.id} - ${bounty.task}`);
 
@@ -324,9 +342,13 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
+      currentStage = 'bidding';
       const submitted = await submitBid(redis, bounty);
       if (submitted) {
         results.bid++;
+        results.lastBountyId = bounty.id;
+        results.lastWorker = WORKER_USERNAME;
+        results.lastAmount = bounty.reward || 1;
         console.log(`[auto-worker] Bid submitted for ${bounty.id} - ${evaluation.reason}`);
         
         await acceptBid(redis, bounty.id, WORKER_FID, WORKER_USERNAME);
@@ -338,15 +360,21 @@ export async function POST(req: NextRequest) {
 
     for (const bounty of assignedBounties) {
       if (bounty.workerFid === WORKER_FID) {
+        currentStage = 'working';
         console.log(`[auto-worker] Executing: ${bounty.id}`);
         results.executed++;
+        results.lastBountyId = bounty.id;
         
         const result = await executeTask(bounty);
+        currentStage = 'settling';
         await settleBounty(redis, bounty);
         results.settled++;
+        results.lastAmount = bounty.reward || 1;
         console.log(`[auto-worker] Settled: ${bounty.id}`);
       }
     }
+
+    results.stage = currentStage;
 
     const duration = Date.now() - startTime;
     console.log(`[auto-worker] Completed in ${duration}ms`, results);
