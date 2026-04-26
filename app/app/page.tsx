@@ -339,35 +339,18 @@ export default function MiniApp() {
               <div className="text-xs text-white/60">Loading Privy Wallet...</div>
             </div>
           ) : fundingAddress && (
-            <div className="mb-4 bg-[#1C1C1E] rounded-xl p-3">
-              <div className="flex items-center justify-between mb-1">
-                <div className="text-[10px] text-[#34C759]">Privy Wallet</div>
-                <div className="text-[10px] bg-[#34C759]/20 text-[#34C759] px-2 py-0.5 rounded">Active</div>
+            <div className="mb-4 bg-[#1C1C1E] rounded-xl p-3 flex items-center justify-between">
+              <div className="text-[10px] text-white/40">
+                ${userBalance.toFixed(2)} USDC · Base Sepolia
               </div>
-              <button
-                onClick={async () => {
-                  await navigator.clipboard.writeText(fundingAddress);
-                  setCopyingAddress(true);
-                  setTimeout(() => setCopyingAddress(false), 2000);
-                }}
-                className="w-full text-left text-xs text-[#FF9500] hover:text-[#FF3B30] transition-colors flex items-center gap-1"
+              <a 
+                href="https://bridge.base.org/deposit"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[10px] bg-[#FF9500] text-black px-2 py-1 rounded-lg font-medium"
               >
-                <FiCopy size={10} />
-                {copyingAddress ? 'Copied!' : fundingAddress}
-              </button>
-              <div className="flex items-center justify-between mt-2">
-                <div className="text-[10px] text-white/40">
-                  <FiDollarSign className="inline" size={8} />{userBalance.toFixed(2)} USDC
-                </div>
-                <a 
-                  href="https://bridge.base.org/deposit"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[10px] bg-[#FF9500] text-black px-2 py-1 rounded-lg font-medium hover:bg-[#FF3B30] transition-colors"
-                >
-                  Get Test USDC
-                </a>
-              </div>
+                Get Test USDC
+              </a>
             </div>
           ))}
           <div className="flex items-center justify-between mb-6">
@@ -402,26 +385,42 @@ export default function MiniApp() {
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="absolute top-12 right-0 bg-[#2C2C2E] rounded-2xl p-4 w-56 shadow-xl"
+                    className="absolute top-12 right-0 bg-[#2C2C2E] rounded-2xl p-4 w-64 shadow-xl"
                     style={{ zIndex: 9999 }}
                   >
-                    <div className="text-xs text-white/60 mb-2">{user.username}</div>
+                    <div className="text-xs text-white/60 mb-2">@{user.username}</div>
                     <div className="text-[10px] text-[#34C759] mb-3 flex items-center gap-1">
                       <div className="w-2 h-2 rounded-full bg-[#34C759]"></div>
                       Privy Wallet Connected
                     </div>
                     {fundingAddress && (
-                      <button
-                        onClick={async () => {
-                          await navigator.clipboard.writeText(fundingAddress);
-                          setCopyingAddress(true);
-                          setTimeout(() => setCopyingAddress(false), 2000);
-                        }}
-                        className="w-full text-left text-xs text-white/80 hover:text-[#FF9500] transition-colors flex items-center gap-2 mb-2"
-                      >
-                        <FiCopy size={12} />
-                        {copyingAddress ? 'Copied!' : 'Copy Wallet Address'}
-                      </button>
+                      <>
+                        <div className="text-[10px] text-white/40 mb-1">Wallet Address</div>
+                        <button
+                          onClick={async () => {
+                            await navigator.clipboard.writeText(fundingAddress);
+                            setCopyingAddress(true);
+                            setTimeout(() => setCopyingAddress(false), 2000);
+                          }}
+                          className="w-full text-left text-xs text-[#FF9500] hover:text-[#FF3B30] transition-colors break-all mb-2"
+                        >
+                          {copyingAddress ? '✓ Copied!' : fundingAddress}
+                        </button>
+                        <div className="flex items-center justify-between bg-[#1C1C1E] rounded-xl p-2 mb-2">
+                          <div className="text-[10px] text-white/40">Balance</div>
+                          <div className="text-sm font-semibold text-[#34C759]">
+                            ${userBalance.toFixed(2)} USDC
+                          </div>
+                        </div>
+                        <a 
+                          href="https://bridge.base.org/deposit"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block text-center text-xs bg-[#FF9500] text-black px-3 py-2 rounded-lg font-medium mb-2"
+                        >
+                          Get Test USDC
+                        </a>
+                      </>
                     )}
                     <div className="border-t border-white/10 pt-2 mt-2">
                       <button
