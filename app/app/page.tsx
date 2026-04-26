@@ -358,7 +358,12 @@ export default function MiniApp() {
               </a>
               <div className="relative" style={{ zIndex: 100 }}>
                 <button
-                  onClick={() => setShowAccountMenu(!showAccountMenu)}
+                  onClick={() => {
+                    setShowAccountMenu(!showAccountMenu);
+                    if (!showAccountMenu && user?.fid) {
+                      initPrivyWallet(user.fid, user.username);
+                    }
+                  }}
                   className="flex items-center gap-2 cursor-pointer p-1"
                 >
                   <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#FF9500] to-[#FF3B30] flex items-center justify-center text-black text-xs font-semibold">

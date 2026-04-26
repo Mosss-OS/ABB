@@ -62,10 +62,20 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'invalid fid' }, { status: 400 });
   }
   
-  const walletAddress = deriveWalletAddress(fidNum);
+  const config = getRedisConfig();
+  let walletAddress: string | null = null;
+  
+  if (config.url && config.token) {
+    const redis = new Redis({ url: config.url, token: config.token });
+    walletAddress = await redis.get(`privy_wallet:${fidNum}`);
+  }
+  
+  if (!walletAddress) {
+    walletAddress = deriveWalletAddress(fidNum);
+  }
+  
   const balance = await getBalanceFromChain(walletAddress);
   
-  const config = getRedisConfig();
   let depositedUsdc = 0;
   if (config.url && config.token) {
     const redis = new Redis({ url: config.url, token: config.token });
