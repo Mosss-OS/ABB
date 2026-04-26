@@ -182,9 +182,32 @@ export default function MiniApp() {
         await miniappSdk.actions.ready();
         const ctx = await miniappSdk.context;
         if (ctx?.user) {
-          setUser({ fid: ctx.user.fid, username: ctx.user.username || '' });
+          const fid = ctx.user.fid;
+          const username = ctx.user.username || '';
+          setUser({ fid, username });
+          sdkRef.current = miniappSdk;
+          
+          console.log('[sdk] User found:', fid, username);
+          
+          // Auto-create/get wallet and balance
+          const res = await fetch('/api/auth/privy-login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fid, username }),
+          });
+          const data = await res.json();
+          console.log('[sdk] Wallet data:', data);
+          
+          if (data.address) {
+            setFundingAddress(data.address);
+            setUserBalance(data.balance || 0);
+            console.log('[sdk] Set wallet:', data.address, 'balance:', data.balance);
+          }
+          
+          setShowSplash(false);
+        } else {
+          console.log('[sdk] No user in context');
         }
-        sdkRef.current = miniappSdk;
       } catch (e) {
         console.log('SDK init error:', e);
       }
@@ -196,7 +219,7 @@ export default function MiniApp() {
   useEffect(() => {
     if (!user?.fid) return;
     initPrivyWallet(user.fid, user.username);
-  }, [user?.fid]);
+  }, []);
 
   const handleDisconnect = () => {
     setShowAccountMenu(false);
@@ -300,21 +323,17 @@ export default function MiniApp() {
           <h1 className="text-3xl font-bold text-white mb-2">ABB</h1>
           <p className="text-white/60 mb-8">Agent Bounty Board</p>
           
-          <button 
-            onClick={handlePrivyLogin}
-            disabled={walletLoading}
-            className="bg-gradient-to-r from-[#FF9500] to-[#FF3B30] text-black font-semibold py-3 px-8 rounded-2xl mb-4 w-full max-w-xs disabled:opacity50"
-          >
-            {walletLoading ? 'Connecting...' : user ? 'Enter App' : 'Connect with Farcaster'}
-          </button>
-          
-          {user && (
+          {walletLoading ? (
+            <div className="text-white/60">Loading wallet...</div>
+          ) : user ? (
             <button 
               onClick={() => setShowSplash(false)}
-              className="text-white/60 text-sm hover:text-white transition-colors"
+              className="bg-gradient-to-r from-[#FF9500] to-[#FF3B30] text-black font-semibold py-3 px-8 rounded-2xl mb-4 w-full max-w-xs"
             >
-              Continue as @{user.username}
+              Enter App as @{user.username}
             </button>
+          ) : (
+            <div className="text-white/60">Please open in Warpcast</div>
           )}
           
           <div className="mt-6">
