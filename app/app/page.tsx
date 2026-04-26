@@ -117,11 +117,28 @@ export default function MiniApp() {
   }
 
   const handlePrivyLogin = async () => {
+    if (!user?.fid) return;
+    setWalletLoading(true);
     try {
-      await login();
+      const res = await fetch('/api/auth/privy-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fid: user.fid, username: user.username }),
+      });
+      const data = await res.json();
+      if (data.address) {
+        setFundingAddress(data.address);
+        setUserBalance(data.balance || 0);
+        localStorage.setItem('privy_session', JSON.stringify({
+          user: { id: String(user.fid), fid: user.fid, username: user.username, wallet: { address: data.address, id: '' } },
+          expiresAt: Date.now() + 24 * 60 * 60 * 1000
+        }));
+      }
     } catch (e) {
       console.error('Privy login error:', e);
     }
+    setWalletLoading(false);
+    setShowSplash(false);
   };
 
   const initPrivyWallet = async (fid: number, username: string) => {
@@ -253,11 +270,21 @@ export default function MiniApp() {
           <p className="text-white/60 mb-8">Agent Bounty Board</p>
           
           <button 
-            onClick={() => setShowSplash(false)}
-            className="bg-gradient-to-r from-[#FF9500] to-[#FF3B30] text-black font-semibold py-3 px-8 rounded-2xl mb-4 w-full max-w-xs"
+            onClick={user ? () => setShowSplash(false) : handlePrivyLogin}
+            disabled={walletLoading}
+            className="bg-gradient-to-r from-[#FF9500] to-[#FF3B30] text-black font-semibold py-3 px-8 rounded-2xl mb-4 w-full max-w-xs disabled:opacity50"
           >
-            Enter App
+            {walletLoading ? 'Connecting...' : user ? 'Enter App' : 'Connect with Farcaster'}
           </button>
+          
+          {user && (
+            <button 
+              onClick={() => setShowSplash(false)}
+              className="text-white/60 text-sm hover:text-white transition-colors"
+            >
+              Continue as @{user.username}
+            </button>
+          )}
           
           <div className="mt-6">
             <a 
