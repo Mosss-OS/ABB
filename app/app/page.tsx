@@ -344,7 +344,7 @@ export default function MiniApp() {
                 ${userBalance.toFixed(2)} USDC · Base Sepolia
               </div>
               <a 
-                href="https://bridge.base.org/deposit"
+                href="https://faucet.circle.com/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[10px] bg-[#FF9500] text-black px-2 py-1 rounded-lg font-medium"
@@ -413,7 +413,7 @@ export default function MiniApp() {
                           </div>
                         </div>
                         <a 
-                          href="https://bridge.base.org/deposit"
+                          href="https://faucet.circle.com/"
                           target="_blank"
                           rel="noopener noreferrer"
                           className="block text-center text-xs bg-[#FF9500] text-black px-3 py-2 rounded-lg font-medium mb-2"
@@ -675,7 +675,7 @@ export default function MiniApp() {
                   <p className="mb-1">How to fund:</p>
                   <ol className="list-decimal list-inside space-y-1">
                     <li>Copy your wallet address above</li>
-                    <li>Go to <span className="text-[#FF9500]">https://bridge.base.org</span></li>
+                    <li>Go to <span className="text-[#FF9500]">https://faucet.circle.com</span></li>
                     <li>Deposit USDC to Base Sepolia</li>
                     <li>Return and create bounty</li>
                   </ol>
@@ -689,7 +689,7 @@ export default function MiniApp() {
                     Close
                   </button>
                   <a 
-                    href="https://bridge.base.org/deposit"
+                    href="https://faucet.circle.com/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex-1 bg-gradient-to-r from-[#FF9500] to-[#FF3B30] text-black font-semibold py-3 rounded-2xl text-sm text-center"

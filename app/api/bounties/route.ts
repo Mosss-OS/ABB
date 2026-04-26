@@ -170,7 +170,7 @@ export async function POST(req: NextRequest) {
         message: `Insufficient balance. You have ${balance.toFixed(2)} USDC but need ${rewardUsdc} USDC. Please fund your wallet first.`,
         instructions: [
           '1. Copy your wallet address',
-          '2. Go to https://bridge.base.org/deposit',
+          '2. Go to https://faucet.circle.com/',
           '3. Deposit USDC to Base Sepolia',
           '4. Return and create bounty'
         ]
