@@ -229,8 +229,31 @@ async function handleAssigned(cast: any): Promise<void> {
   if (!bounty) return;
   
   let output = '';
-  
-  if (process.env.GROQ_API_KEY) {
+   
+  // Try OpenRouter first (if key is set), then Groq, then fallback
+  if (process.env.OPENROUTER_API_KEY) {
+    try {
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash', // Fast, cost-effective via OpenRouter
+          messages: [
+            { role: 'system', content: 'You are an AI worker. Execute the task and provide the result.' },
+            { role: 'user', content: bounty.taskDescription },
+          ],
+          max_tokens: 500,
+        }),
+      });
+      const data = await response.json();
+      output = data.choices?.[0]?.message?.content || '[task failed]';
+    } catch (err) {
+      output = `[OpenRouter error: ${err instanceof Error ? err.message : 'unknown'}]`;
+    }
+  } else if (process.env.GROQ_API_KEY) {
     try {
       const { Groq } = await import('groq-sdk');
       const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
@@ -245,7 +268,7 @@ async function handleAssigned(cast: any): Promise<void> {
       });
       output = completion.choices[0]?.message?.content || '[task failed]';
     } catch (err) {
-      output = `[AI error: ${err instanceof Error ? err.message : 'unknown'}]`;
+      output = `[Groq error: ${err instanceof Error ? err.message : 'unknown'}]`;
     }
   } else {
     output = `[Task: ${bounty.taskDescription}]`;
